@@ -1,0 +1,32 @@
+# 指定语言环境
+language: node_js
+# 指定需要sudo权限
+sudo: required
+# 指定node_js版本
+node_js:
+  - stable
+
+# 指定博客源码分支，因人而异。hexo博客源码托管在独立repo则不用设置此项
+branches:
+  only:
+    - hexo
+
+before_install:
+  - npm install -g hexo-cli
+
+# Start: Build Lifecycle
+install:
+  - npm install
+  - npm install hexo-deployer-git --save
+
+# 设置git提交名，邮箱；替换真实token到_config.yml文件，最后depoy部署
+before_script:
+  - git config user.name "itren🌟travis-ci"
+  - git config user.email "itren.tech@gmail.com"
+  - sed -i'' "s~https://github.com/itren/itren.github.io.git~https://${GITHUB_ACCESS_TOKEN}@github.com/itren/itren.github.io.git~" _config.yml
+
+# 执行清缓存，生成网页操作
+script:
+  - hexo clean
+  - hexo generate
+  - hexo deploy
