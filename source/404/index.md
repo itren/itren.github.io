@@ -1,5 +1,5 @@
 ---
-title: 404
+title: 未找到
 date: 2019-07-18 11:53:06
 type: 404
 permalink: /404
