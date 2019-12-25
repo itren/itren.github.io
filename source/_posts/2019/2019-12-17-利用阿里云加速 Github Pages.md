@@ -1,9 +1,9 @@
 ---
 title: 利用阿里云加速 Hexo 静态博客
 categories:
-  - 博客
+  - Blog
 tags:
-  - 阿里云
+  - AliYun
   - Hexo
 abbrlink: 67d118b2
 date: 2019-12-17 00:00:00
