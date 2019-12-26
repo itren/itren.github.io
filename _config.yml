@@ -103,6 +103,9 @@ theme: next
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type: git
+- type: git
   repo: https://github.com/itren/itren.github.io.git
+  branch: master
+- type: git
+  repo: https://git.dev.tencent.com/scdoing/scdoing.coding.me.git
   branch: master
