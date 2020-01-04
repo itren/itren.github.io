@@ -1,5 +1,5 @@
 ---
-title: Presto-Oracle 插件编写教程
+title: Presto Oracle 插件编写教程
 categories:
   - bigdata
 tags:
@@ -19,7 +19,7 @@ Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景�
 
 ## 新建 module
 
-官方已经编写了 MySQL 插件，我们可以按照这个模板来开发。我们在 presto 的根目录下新建 module，该 module 的 pom 信息如下：
+官方已经编写了 MySQL 插件，我们可以按照这个模板来开发。我们在 Presto 的根目录下新建 module，该 module 的 pom 信息如下：
 
 ```
     <?xml version="1.0"?>
@@ -240,9 +240,9 @@ Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景�
                   </dependency>
 ```
 
-## 集成 module 到 presto
+## 集成 module 到 Presto
 
-因为我们是基于源码开发的，为了将 presto-oracle 集成到 presto 中进行测试以及打包发布还需如下配置：
+因为我们是基于源码开发的，为了将 presto-oracle 集成到 Presto 中进行测试以及打包发布还需如下配置：
 
 ### 1.修改config.properties 配置文件 
 

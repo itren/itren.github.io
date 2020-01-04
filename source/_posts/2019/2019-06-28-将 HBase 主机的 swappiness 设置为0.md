@@ -9,17 +9,17 @@ date: 2019-06-28 23:29:53
 updated: 2020-01-04 13:35:57
 ---
 
-HBase是一个对内存比较敏感的存储系统，所以需要将Linux系统的交换内存设置为0，否则当系统内存不足时如果出现内存交换会造成HBase与Zookeeper之间的会话超时，比较明显的问题就是ReginServer会经常挂掉。
+HBase 是一个对内存比较敏感的存储系统，所以需要将 Linux 系统的交换内存设置为0，否则当系统内存不足时如果出现内存交换会造成 HBase 与 Zookeeper 之间的会话超时，比较明显的问题就是 RegionServer 会经常挂掉。
 
 <!--more-->
 
-*   将Swappines临时设置为0
+*   将 swappines 临时设置为0
 
 ```
 root# sysctl -w vm.swappiness=0
 ```
 
-*   将Swappines永久设置为0
+*   将 swappines 永久设置为0
 
 ```
 root# echo "vm.swappiness = 0" >> /etc/sysctl.conf
