@@ -33,6 +33,7 @@ updated: 2019-12-29 16:30:00
 * 电脑：Macbook Pro 2016 15 Inch
 * 显示器：DELL U2515H
 * 路由器：ASUS AC86U
+* 常用VPS：搬瓦工洛杉矶 GIA
 
 ---
 
