@@ -693,6 +693,5 @@ tar.gz 文件路径：presto/presto-srver/target
 
 ![](https://www.itren.tech/2017/media/15781154252940.jpg)
 
-* * *
 
 如果上述操作出现问题，可以参照我托管的 [Presto](https://github.com/itren/presto-with-oracle)，也可以留言与我共同探讨 。
