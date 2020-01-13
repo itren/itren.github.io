@@ -3,7 +3,7 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: IT人技术博客
+title: IT杂货铺
 subtitle: '技术、人、生活'
 description: '程序员👨‍💻杂记'
 keywords: Java,程序员,技术博客,阿里云,搬瓦工,PS4,科学上网
@@ -13,7 +13,7 @@ timezone: 'Asia/Shanghai'
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: https://itren.tech
+url: https://www.itgrocery.cn
 root: /
 permalink: posts/:abbrlink/
 permalink_defaults:
