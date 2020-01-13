@@ -248,7 +248,7 @@ Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景�
 
 config.properties 文件在“presto/presto-main/etc”路径下，在plugin.bundles 下添加“../presto-oracle/pom.xml”。 
 
-![](https://itgrocery.cn/2017/media/15781152880509.jpg)
+![](https://site.itgrocery.cn/2017/media/15781152880509.jpg)
 
 **只有添加了 presto-oracle 的 pom 信息 presto 在 IDE 中调试时再回加载 presto-oracle 插件，否则无效**，上述配置只是用于开发环境，正式环境下无需配置。
 
@@ -262,11 +262,11 @@ config.properties 文件在“presto/presto-main/etc”路径下，在plugin.bun
           </artifactSet>
 ```
 
-![](https://itgrocery.cn/2017/media/15781153734779.jpg)
+![](https://site.itgrocery.cn/2017/media/15781153734779.jpg)
 
 上述配置的作用是在 presto 编译时可以将我们的 presto-oracle 插件添加到 plugin 目录下。
 
-![](https://itgrocery.cn/2017/media/15781153846079.jpg)
+![](https://site.itgrocery.cn/2017/media/15781153846079.jpg)
 
 ## 编写代码
 
@@ -687,11 +687,11 @@ config.properties 文件在“presto/presto-main/etc”路径下，在plugin.bun
 
 tar.gz 文件路径：presto/presto-srver/target 
 
-![](https://itgrocery.cn/2017/media/15781154142633.jpg)
+![](https://site.itgrocery.cn/2017/media/15781154142633.jpg)
 
 ### 2.rpm 文件路径：presto/presto-server-rpm/target
 
-![](https://itgrocery.cn/2017/media/15781154252940.jpg)
+![](https://site.itgrocery.cn/2017/media/15781154252940.jpg)
 
 
 如果上述操作出现问题，可以参照我托管的 [Presto](https://github.com/itren/presto-with-oracle)，也可以留言与我共同探讨 。
