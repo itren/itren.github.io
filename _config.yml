@@ -107,5 +107,5 @@ deploy:
   repo: https://github.com/itren/itren.github.io.git
   branch: master
 - type: git
-  repo: https://git.dev.tencent.com/scdoing/scdoing.coding.me.git
+  repo: https://e.coding.net/scdoing/scdoing.coding.me.git
   branch: master
