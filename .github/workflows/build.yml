@@ -1,0 +1,53 @@
+name: Blog CI/CD
+
+# 触发条件：在 push 到 hexo-blog-backup 分支后触发
+on:
+  push:
+    branches: 
+      - hexo
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  blog-cicd:
+    name: Hexo blog build & deploy
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 系统作为编译部署的环境
+
+    steps:
+    - name: Checkout codes
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Setup node
+      # 设置 node.js 环境
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+
+    - name: Install hexo dependencies
+      # 下载 hexo-cli 脚手架及相关安装包
+      run: |
+        npm install hexo-cli -g
+        npm install
+        npm install hexo-deployer-git --save
+        
+    - name: Change Config
+      # 替换相关的配置
+      run: |
+        git config --global user.name "itren🌟actions"
+        git config --global user.email "itren.tech@gmail.com"
+        sed -i'' "s~https://github.com/itren/itren.github.io.git~https://${{ secrets.GH_ACCESS_TOKEN }}@github.com/itren/itren.github.io.git~" _config.yml
+        sed -i'' "s~https://e.coding.net/scdoing/scdoing.coding.me.git~https://${{ secrets.CODING_ACCESS_USER }}:${{ secrets.CODING_ACCESS_TOKEN }}@scdoing.coding.net/scdoing/scdoing.coding.me.git~" _config.yml
+
+    - name: Generate files
+      # 编译项目
+      run: |
+        hexo clean
+        hexo generate
+        
+    - name: Deploy files
+      # 部署项目
+      run: |
+        hexo deploy
