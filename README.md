@@ -1,5 +1,8 @@
-[![Build Status](https://travis-ci.org/itren/itren.github.io.svg?branch=hexo)](https://travis-ci.org/itren/itren.github.io) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Blog CI/CD](https://github.com/itren/itren.github.io/workflows/Blog%20CI/CD/badge.svg?branch=hexo)](https://github.com/itren/itren.github.io/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub issues](https://img.shields.io/github/issues/itren/itren.github.io)](https://github.com/itren/itren.github.io/issues)
+
+> Thanks for non-commercial open source development authorization by JetBrains
 
 ## Install
 
@@ -37,8 +40,6 @@ hexo g
 ```
 hexo s
 ```
-
-
 
 
 
