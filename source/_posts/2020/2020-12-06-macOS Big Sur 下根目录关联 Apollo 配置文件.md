@@ -26,7 +26,7 @@ date: 2020-12-06 22:27:38
 
 ## 使用 root 权限新建 synthetic.conf 文件
 
-mac 上面开启 root 权限可以自行搜索，下面给出 synthetic.conf 配置的示例：
+因为要在系统根目录创建配置文件，所以需要 root权限，mac 上如何开启 root 权限可以自行搜索，下面给出 synthetic.conf 配置的示例：
 
 ```
 opt	/Users/{user_dir}/opt
