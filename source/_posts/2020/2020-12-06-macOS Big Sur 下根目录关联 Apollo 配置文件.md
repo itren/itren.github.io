@@ -4,7 +4,7 @@ categories:
   - tools
 tags:
   - macOS
-  - Apollo
+  - apollo
 abbrlink: f9c08d5a
 date: 2020-12-06 22:27:38
 ---
