@@ -1,6 +1,7 @@
 ---
 title: Canal Admin 搭建 Canal 集群以及体验
 categories:
+  - cookbook
   - etl
 tags:
   - canal-admin
