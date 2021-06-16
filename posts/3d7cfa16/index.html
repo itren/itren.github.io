@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-itren.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-itren.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-itren.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-flash.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://www.itgrocery.cn').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"manual"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":false,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+<script data-ad-client="ca-pub-1876891583962196" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <meta name="description" content="想要用好 MySQL，索引与锁是一个绕不开的话题。最近一直在维护以前的业务系统，线上频繁报出数据库死锁的异常警告，为了排查以及规避死锁的问题，因此对 MySQL 的锁（Innodb引擎）做了一个比较深入学习，顺便加深自己对 MySQL 的理解程度。个人感觉 MySQL 中的锁还是非常的杂，官网对于锁的介绍也是和盘托出，并没有分门别类的罗列出来，下面分别从锁的模式与算法来分析。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于MySQL各类锁的总结">
+<meta property="og:url" content="https:&#x2F;&#x2F;www.itgrocery.cn&#x2F;posts&#x2F;3d7cfa16&#x2F;index.html">
+<meta property="og:site_name" content="IT杂货铺">
+<meta property="og:description" content="想要用好 MySQL，索引与锁是一个绕不开的话题。最近一直在维护以前的业务系统，线上频繁报出数据库死锁的异常警告，为了排查以及规避死锁的问题，因此对 MySQL 的锁（Innodb引擎）做了一个比较深入学习，顺便加深自己对 MySQL 的理解程度。个人感觉 MySQL 中的锁还是非常的杂，官网对于锁的介绍也是和盘托出，并没有分门别类的罗列出来，下面分别从锁的模式与算法来分析。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-12-19T13:08:46.000Z">
+<meta property="article:modified_time" content="2021-06-16T15:22:54.919Z">
+<meta property="article:author" content="itren(香农)">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.itgrocery.cn/posts/3d7cfa16/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>关于MySQL各类锁的总结 | IT杂货铺</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154647738-2"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-154647738-2');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="IT杂货铺" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">IT杂货铺</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">技术、人、生活</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">15</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">31</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.itgrocery.cn/posts/3d7cfa16/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="itren(香农)">
+      <meta itemprop="description" content="程序员👨‍💻杂记">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="IT杂货铺">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          关于MySQL各类锁的总结
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-19 21:08:46" itemprop="dateCreated datePublished" datetime="2020-12-19T21:08:46+08:00">2020-12-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-06-16 23:22:54" itemprop="dateModified" datetime="2021-06-16T23:22:54+08:00">2021-06-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/summary/" itemprop="url" rel="index">
+                    <span itemprop="name">summary</span>
+                  </a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/summary/database/" itemprop="url" rel="index">
+                    <span itemprop="name">database</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/3d7cfa16/" class="post-meta-item leancloud_visitors" data-flag-title="关于MySQL各类锁的总结" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <p>想要用好 MySQL，索引与锁是一个绕不开的话题。最近一直在维护以前的业务系统，线上频繁报出数据库死锁的异常警告，为了排查以及规避死锁的问题，因此对 MySQL 的锁（Innodb引擎）做了一个比较深入学习，顺便加深自己对 MySQL 的理解程度。个人感觉 MySQL 中的锁还是非常的杂，官网对于锁的介绍也是和盘托出，并没有分门别类的罗列出来，下面分别从锁的模式与算法来分析。</p>
+<a id="more"></a>
+
+<h2 id="锁的模式"><a href="#锁的模式" class="headerlink" title="锁的模式"></a>锁的模式</h2><p>MySQL 中有锁的模式这个概念，在 Innodb 中锁的模式有共享锁（S锁）、排它锁（X锁）两大类。除了这两大类，还有一个意向锁的概念，意向锁在锁模式中有意向共享锁（IS锁）、意向排它锁（IX锁）两类。</p>
+<h3 id="共享锁（行级别）"><a href="#共享锁（行级别）" class="headerlink" title="共享锁（行级别）"></a>共享锁（行级别）</h3><p>共享锁也叫读锁，对于同一个资源，大家都可以同时加上共享锁，可以理解成非独家的资源，大家都可以获取。共享锁与排它锁互斥，在 MySQL 中可以使用“lock in share mode”语法显式的加共享锁。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test where id &#x3D; 1 lock in share mode;</span><br></pre></td></tr></table></figure>
+
+<h3 id="排它锁（行级别）"><a href="#排它锁（行级别）" class="headerlink" title="排它锁（行级别）"></a>排它锁（行级别）</h3><p>排它锁也叫写锁，排它锁不仅与共享锁互斥，排它锁与排它锁也互斥，在 MySQL 中可以使用“for update”语法显示的加排它锁。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test where id &#x3D; 1 for update;</span><br></pre></td></tr></table></figure>
+
+<h3 id="意向锁（表级别）"><a href="#意向锁（表级别）" class="headerlink" title="意向锁（表级别）"></a>意向锁（表级别）</h3><p>InnoDB 存储引擎支持多粒度锁定，当数据库对行记录进行加锁时，首先会在粗粒度的表级别加上意向锁。意向锁的主要目的是为了提升表锁的加锁效率，假设没有意向锁，数据库在对表进行加锁时，需要扫描表中所有的记录，查看是否有行锁与当前要加的表锁冲突。意向锁之间是没有冲突的，意向锁与普通的表锁之间有冲突。</p>
+<ul>
+<li>意向共享锁</li>
+</ul>
+<p>意向共享锁无法通过语法显式的操作，当加上行级别的共享锁时，意向共享锁就会存在，意向共享锁与排它锁（表级）冲突。</p>
+<ul>
+<li>意向排它锁</li>
+</ul>
+<p>意向排它锁与上面的意向共享锁类似，它与共享锁（表级）、排它锁（表级）都冲突。</p>
+<h3 id="普通锁（表级别）"><a href="#普通锁（表级别）" class="headerlink" title="普通锁（表级别）"></a>普通锁（表级别）</h3><p>表级别的锁因为粒度更粗，所以在判断是否有冲突时不仅要考虑表级别下的其它锁，还要考虑表中的行锁。</p>
+<ul>
+<li>共享锁</li>
+</ul>
+<p>除了对行可以加共享锁，也可以对表加共享锁，通过“lock table read”语法来对表加共享锁。表级别的共享锁不仅与表级别的排它锁冲突，而且与行级别的排它锁冲突。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lock table test read;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>排它锁</li>
+</ul>
+<p>除了对行可以加排它锁，也可以对表加排它锁，通过“lock table write”语法来对表加共享锁。表级别的排它锁不仅与表级别的共享锁、排它锁冲突，而且与行级别的排它锁也冲突。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lock table test write;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="锁的算法"><a href="#锁的算法" class="headerlink" title="锁的算法"></a>锁的算法</h2><p>锁的模式侧重锁的意图，锁的算法更加偏重锁的范围，例如下面列举的这些锁都是跟锁住的范围区间有关系。为了更好的演示锁住的区间，下面给出测试的表结构以及数据方便论证。</p>
+<p>表结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE &#96;test_info&#96; (</span><br><span class="line">  &#96;id&#96; int(11) NOT NULL,</span><br><span class="line">  &#96;no&#96; int(20) NOT NULL AUTO_INCREMENT,</span><br><span class="line">  &#96;description&#96; varchar(255) NOT NULL,</span><br><span class="line">  PRIMARY KEY (&#96;id&#96;),</span><br><span class="line">  UNIQUE KEY &#96;idx_no&#96; (&#96;no&#96;) USING BTREE,</span><br><span class="line">  KEY &#96;idx_description&#96; (&#96;description&#96;(191)) USING BTREE</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (1, 10, &#39;100&#39;);</span><br><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (2, 20, &#39;200&#39;);</span><br><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (5, 50, &#39;500&#39;);</span><br><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (10, 100, &#39;1000&#39;);</span><br><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (11, 110, &#39;1000&#39;);</span><br></pre></td></tr></table></figure>
+
+<h3 id="记录锁"><a href="#记录锁" class="headerlink" title="记录锁"></a>记录锁</h3><p>记录锁作用在精确匹配的唯一索引上，它与间隙锁最大的差别在于间隙锁锁住的是不存在的区间。</p>
+<p>记录锁 SQL 示例：</p>
+<ul>
+<li>主键索引加锁</li>
+</ul>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where id &#x3D; 1 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where id &#x3D; 1 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二阻塞。</p>
+<ul>
+<li>唯一索引加锁</li>
+</ul>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where no &#x3D; 10 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where no &#x3D; 10 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二阻塞</p>
+<ul>
+<li>普通索引加锁</li>
+</ul>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where description &#x3D; 1000 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where id &#x3D; 10 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二阻塞，结束事物二，执行事物三</p>
+<p>事物三：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where id &#x3D; 11 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物三阻塞，结束事物三，执行事物四</p>
+<p>事物四：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where id &#x3D; 5 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物四未被阻塞。</p>
+<p>普通索引作为二级索引被加锁时，对应的主键索引也是会被加锁的，所以可以看到 id 为 10、11 的记录都会被阻塞住。</p>
+<h3 id="间隙锁"><a href="#间隙锁" class="headerlink" title="间隙锁"></a>间隙锁</h3><p>间隙锁一般存在于 RR 的隔离级别，MySQL 在 RR 隔离级别下可以解决部分幻读的问题，依靠的就是间隙锁。间隙锁的上界、下界都是开区间，间隙锁存在的目的主要是为了阻塞插入操作，这样就不会存在相同的条件下查询的结果集不一致的情况。</p>
+<p>间隙锁示例（RR隔离级别）：</p>
+<ul>
+<li>普通索引加锁（未命中记录）</li>
+</ul>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where description &#x3D; 300 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (3, 21, &#39;210&#39;);</span><br></pre></td></tr></table></figure>
+
+<p>事物二会阻塞，因为示例中的事物隔离级别为 RR，并且在事物一中没有查询到记录，为了避免幻读发生，所以将 (200,500) 的期间锁住了。上面的介绍中有提到间隙锁一般存在于 RR 的隔离级别中，所以上面的示例在 RC 隔离级别下执行事物二是不会被阻塞的。</p>
+<ul>
+<li>普通索引加锁（命中记录）</li>
+</ul>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where description &#x3D; 200 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where description &#x3D; 210 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二阻塞，结束事物二，执行事物三</p>
+<p>事物三：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where description &#x3D; 190 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物三阻塞。</p>
+<p>如果普通索引命中了记录，那么被锁定的区间不仅有 (200,500)，还有 (100,200]，所以普通索引的前后都会被锁住。</p>
+<ul>
+<li>唯一索引加锁</li>
+</ul>
+<p>对于唯一索引如果命中记录，那么会加上记录锁（临间锁退化为记录锁，记录锁已演示这种场景），如果没有命中记录则会加上间隙锁。</p>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from test_info where no &#x3D; 21 for update;</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INSERT INTO &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) VALUES (3, 22, &#39;210&#39;);</span><br></pre></td></tr></table></figure>
+<p>事物二阻塞</p>
+<h3 id="临键锁"><a href="#临键锁" class="headerlink" title="临键锁"></a>临键锁</h3><p>临键锁是由记录锁与间隙锁组成的（区间为左开右闭），所以记录锁与间隙锁可以理解成特殊场景下的临键锁。Innodb 引擎行锁默认采用的就是临键锁的算法，只是在不同的场景下会退化成记录锁或者间隙锁。</p>
+<h2 id="特殊场景的锁"><a href="#特殊场景的锁" class="headerlink" title="特殊场景的锁"></a>特殊场景的锁</h2><h3 id="插入操作"><a href="#插入操作" class="headerlink" title="插入操作"></a>插入操作</h3><p>插入操作加锁的操作是一个复杂的过程，并不会只存在一把锁。插入过程中首先会加插入意向锁，接着检查是否有唯一键冲突的问题，针对唯一性冲突还有可能会加上 S GAP（RC的隔离级别也会存在），当记录插入成功时还会对该条记录加上 X 的记录锁。 </p>
+<p>事物一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">delete from test_info where no &#x3D; 50;</span><br><span class="line"></span><br><span class="line">insert into &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) values (5, 50, 500);</span><br></pre></td></tr></table></figure>
+
+<p>事物二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">insert into &#96;test_info&#96;(&#96;id&#96;, &#96;no&#96;, &#96;description&#96;) values (3, 30, 300);</span><br></pre></td></tr></table></figure>
+
+<p>事物二阻塞</p>
+
+    </div>
+
+    
+    
+    
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <div class="reward-container">
+  <div>如果觉得我的文章对您有用，请查看广告（Google Ads）或扫码。您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="itren(香农) 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="itren(香农) 支付宝">
+        <p>支付宝</p>
+      </div>
+      <div style="display: inline-block;">
+        <img src="/images/paypal.png" alt="itren(香农) PayPal">
+        <p>PayPal</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>itren(香农)
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.itgrocery.cn/posts/3d7cfa16/" title="关于MySQL各类锁的总结">https://www.itgrocery.cn/posts/3d7cfa16/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/mysql/" rel="tag"><i class="fa fa-tag"></i> mysql</a>
+          </div>
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/f9c08d5a/" rel="prev" title="macOS Big Sur 下根目录关联 Apollo 配置文件">
+      <i class="fa fa-chevron-left"></i> macOS Big Sur 下根目录关联 Apollo 配置文件
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/31d89820/" rel="next" title="常用服务 Docker 部署指南">
+      常用服务 Docker 部署指南 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#锁的模式"><span class="nav-number">1.</span> <span class="nav-text">锁的模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#共享锁（行级别）"><span class="nav-number">1.1.</span> <span class="nav-text">共享锁（行级别）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#排它锁（行级别）"><span class="nav-number">1.2.</span> <span class="nav-text">排它锁（行级别）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#意向锁（表级别）"><span class="nav-number">1.3.</span> <span class="nav-text">意向锁（表级别）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#普通锁（表级别）"><span class="nav-number">1.4.</span> <span class="nav-text">普通锁（表级别）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁的算法"><span class="nav-number">2.</span> <span class="nav-text">锁的算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#记录锁"><span class="nav-number">2.1.</span> <span class="nav-text">记录锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#间隙锁"><span class="nav-number">2.2.</span> <span class="nav-text">间隙锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#临键锁"><span class="nav-number">2.3.</span> <span class="nav-text">临键锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#特殊场景的锁"><span class="nav-number">3.</span> <span class="nav-text">特殊场景的锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#插入操作"><span class="nav-number">3.1.</span> <span class="nav-text">插入操作</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="itren(香农)"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">itren(香农)</p>
+  <div class="site-description" itemprop="description">程序员👨‍💻杂记</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://t.me/titren" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;titren" rel="noopener" target="_blank"><i class="fa fa-fw fa-telegram"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/itren" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;itren" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:itren.tech@gmail.com" title="E-Mail → mailto:itren.tech@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Friend Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.iissnan.com/" title="https:&#x2F;&#x2F;theme-next.iissnan.com" rel="noopener" target="_blank">NexT Theme</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://fontawesome.com/" title="https:&#x2F;&#x2F;fontawesome.com" rel="noopener" target="_blank">Font Awesome</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://freessl.cn/" title="https:&#x2F;&#x2F;freessl.cn" rel="noopener" target="_blank">FreeSSL</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://realfavicongenerator.net/" title="https:&#x2F;&#x2F;realfavicongenerator.net" rel="noopener" target="_blank">Favicon Generator</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.alibabacloud.com/" title="https:&#x2F;&#x2F;www.alibabacloud.com" rel="noopener" target="_blank">Alibaba Cloud</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://geektutu.com/" title="https:&#x2F;&#x2F;geektutu.com" rel="noopener" target="_blank">极客兔兔</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.shuziyimin.org/" title="https:&#x2F;&#x2F;blog.shuziyimin.org" rel="noopener" target="_blank">数字移民</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- SIDEBAR_AUTO -->
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:200px"
+           data-ad-client="ca-pub-1876891583962196"
+           data-ad-slot="9161595375"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备17022212号-1 </a>
+      <img src="/images/beian.png" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42098102000038" rel="noopener" target="_blank">鄂公网安备42098102000038 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2017 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">itren(香农)</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.1.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+  <script>
+  function leancloudSelector(url) {
+    return document.getElementById(url).querySelector('.leancloud-visitors-count');
+  }
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = visitors.getAttribute('id').trim();
+      var title = visitors.getAttribute('data-flag-title').trim();
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+              leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .then(response => response.json())
+              .catch(error => {
+                console.log('Failed to save visitor count', error);
+              })
+          } else {
+              Counter('post', '/classes/Counter', { title: title, url: url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.log('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return element.getAttribute('id').trim();
+      });
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url: { '$in': entries } })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length === 0) {
+            document.querySelectorAll('.leancloud_visitors .leancloud-visitors-count').forEach(element => {
+              element.innerText = 0;
+            });
+            return;
+          }
+          for (let item of results) {
+            let { url, time } = item;
+            leancloudSelector(url).innerText = time;
+          }
+          for (let url of entries) {
+            var element = leancloudSelector(url);
+            if (element.innerText == '') {
+              element.innerText = 0;
+            }
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  }
+
+  fetch('https://app-router.leancloud.cn/2/route?appId=nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz')
+    .then(response => response.json())
+    .then(({ api_server }) => {
+      var Counter = (method, url, data) => {
+        return fetch(`https://${api_server}/1.1${url}`, {
+          method: method,
+          headers: {
+            'X-LC-Id': 'nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz',
+            'X-LC-Key': 'wBvPvCEiSnYiIBMeNWU31UEC',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script color='0,0,255' opacity='0.2' zIndex='-1' count='50' src="/lib/canvas-nest/canvas-nest-nomobile.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout: 3000,
+        priority: true,
+        ignores: [uri => uri.includes('#'),uri => uri == 'https://www.itgrocery.cn/posts/3d7cfa16/',]
+      });
+      });
+  </script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'f75b0968ac4219322421',
+      clientSecret: '1c81b8b3343c7d43b8aa324fa2c0524251be5f7e',
+      repo: 'itren.github.io',
+      owner: 'itren',
+      admin: ['itren'],
+      id: '7903e17176bb9a8845de5aee71f032b2',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

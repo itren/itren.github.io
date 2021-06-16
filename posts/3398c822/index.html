@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-itren.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-itren.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-itren.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-flash.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://www.itgrocery.cn').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"manual"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":false,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+<script data-ad-client="ca-pub-1876891583962196" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <meta name="description" content="当我们的站点搭建好了之后肯定希望越来越多的人来访问我们的网站，这样才能提升自己站点的曝光率。如果有其他渠道，也可以通过引流的方式提升曝光率，否则自己有用的信息都会被无效的信息排斥掉，用户搜索不到价值高的内容，好的文章又被雪藏了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="优化 Hexo 提升站点的 SEO">
+<meta property="og:url" content="https:&#x2F;&#x2F;www.itgrocery.cn&#x2F;posts&#x2F;3398c822&#x2F;index.html">
+<meta property="og:site_name" content="IT杂货铺">
+<meta property="og:description" content="当我们的站点搭建好了之后肯定希望越来越多的人来访问我们的网站，这样才能提升自己站点的曝光率。如果有其他渠道，也可以通过引流的方式提升曝光率，否则自己有用的信息都会被无效的信息排斥掉，用户搜索不到价值高的内容，好的文章又被雪藏了。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2019&#x2F;media&#x2F;15768975014334.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2019&#x2F;media&#x2F;15768976661719.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2019&#x2F;media&#x2F;15768979348245.jpg">
+<meta property="article:published_time" content="2019-12-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-12-20T16:00:00.000Z">
+<meta property="article:author" content="itren(香农)">
+<meta property="article:tag" content="hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2019&#x2F;media&#x2F;15768975014334.jpg">
+
+<link rel="canonical" href="https://www.itgrocery.cn/posts/3398c822/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>优化 Hexo 提升站点的 SEO | IT杂货铺</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154647738-2"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-154647738-2');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="IT杂货铺" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">IT杂货铺</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">技术、人、生活</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">15</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">31</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.itgrocery.cn/posts/3398c822/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="itren(香农)">
+      <meta itemprop="description" content="程序员👨‍💻杂记">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="IT杂货铺">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          优化 Hexo 提升站点的 SEO
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-12-21 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-21T00:00:00+08:00">2019-12-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blog/" itemprop="url" rel="index">
+                    <span itemprop="name">blog</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/3398c822/" class="post-meta-item leancloud_visitors" data-flag-title="优化 Hexo 提升站点的 SEO" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <p>当我们的站点搭建好了之后肯定希望越来越多的人来访问我们的网站，这样才能提升自己站点的曝光率。如果有其他渠道，也可以通过引流的方式提升曝光率，否则自己有用的信息都会被无效的信息排斥掉，用户搜索不到价值高的内容，好的文章又被雪藏了。</p>
+<a id="more"></a>
+
+<h2 id="使用固定链接"><a href="#使用固定链接" class="headerlink" title="使用固定链接"></a>使用固定链接</h2><p>默认情况下 Hexo 文章的链接使用的文件的名称，而且前面还会有日期做分隔。这样的链接有两个问题，一个是文件的名称比较长的话链接也会比较长，而且当文件名称发生变化时自己的链接也会发生变化，原来搜索引擎搜索的索引就失效了，用户看到的就会是你的 404 页面。当然这类问题是有解决方案的，Hexo 有个插件叫做 <a href="https://github.com/rozbo/hexo-abbrlink" target="_blank" rel="noopener">hexo-abbrlink</a>，这个插件会在你的原始文件自动添加上一个名为 ”abbrlink“ 的标签，这个标签就是你网页的固定地址，一般我们初次生成之后就不会再修改，所以网页的地址就固定下来了。</p>
+<p>执行下面的命令进行安装：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-abbrlink --save</span><br></pre></td></tr></table></figure>
+
+<p>在站点的 _config.yml 的 URL 配置下面开启 abbrlink：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">permalink: posts&#x2F;:abbrlink&#x2F;</span><br></pre></td></tr></table></figure>
+
+<p>如果你想自己的网页带 html 后缀也是可以的，直接将 abbrlink 后面的 “/“ 替换成 “.html”</p>
+<p>添加 abbrlink 自身的配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># abbrlink config</span><br><span class="line">abbrlink:</span><br><span class="line">  alg: crc32  #support crc16(default) and crc32</span><br><span class="line">  rep: hex    #support dec(default) and hex</span><br></pre></td></tr></table></figure>
+
+<p>上面配置的应该是 abbrlink 的生成的算法以及格式化的方式，直接给出官方推荐的配置。</p>
+<h2 id="开启-SiteMap"><a href="#开启-SiteMap" class="headerlink" title="开启 SiteMap"></a>开启 SiteMap</h2><p>开启 SiteMap 的目的是为了方便搜索引擎来收录站点的网页，就像站点的地图了，知道站点有哪些网页，对搜索引擎更加友好。</p>
+<p>执行安装 <a href="https://github.com/hexojs/hexo-generator-sitemap" target="_blank" rel="noopener">site</a> 的命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-sitemap --save</span><br></pre></td></tr></table></figure>
+
+<p>我使用的是 Next 主题，所以去主题的 _config.yml 的 menu 节点下面开启 sitemap 选项。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  about: &#x2F;about&#x2F; || user</span><br><span class="line">  tags: &#x2F;tags&#x2F; || tags</span><br><span class="line">  categories: &#x2F;categories&#x2F; || th</span><br><span class="line">  archives: &#x2F;archives&#x2F; || archive</span><br><span class="line">  #schedule: &#x2F;schedule&#x2F; || calendar</span><br><span class="line">  sitemap: &#x2F;sitemap.xml || sitemap</span><br><span class="line">  #commonweal: &#x2F;404&#x2F; || heartbeat</span><br></pre></td></tr></table></figure>
+
+<p>开启之后就可以在首页的菜单页面看见 Sitemap 的入口，我们可以点击进入查看是否正常。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;urlset xmlns&#x3D;&quot;http:&#x2F;&#x2F;www.sitemaps.org&#x2F;schemas&#x2F;sitemap&#x2F;0.9&quot;&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;about&#x2F;index.html&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.028Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;categories&#x2F;index.html&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.028Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;tags&#x2F;index.html&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.028Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;posts&#x2F;b493a330&#x2F;&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.004Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;posts&#x2F;684bb6fe&#x2F;&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.004Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;posts&#x2F;5cd9d108&#x2F;&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.004Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;posts&#x2F;67d118b2&#x2F;&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.004Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">  &lt;url&gt;</span><br><span class="line">    &lt;loc&gt;https:&#x2F;&#x2F;itren.tech&#x2F;404.html&lt;&#x2F;loc&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;lastmod&gt;2019-12-20T17:12:13.004Z&lt;&#x2F;lastmod&gt;</span><br><span class="line">    </span><br><span class="line">  &lt;&#x2F;url&gt;</span><br><span class="line">  </span><br><span class="line">&lt;&#x2F;urlset&gt;</span><br></pre></td></tr></table></figure>
+
+<p>上面就是 sitemap.xml 展示的信息，将站点的全部网页都列举出来了。</p>
+<h2 id="提交网站到搜索引擎"><a href="#提交网站到搜索引擎" class="headerlink" title="提交网站到搜索引擎"></a>提交网站到搜索引擎</h2><p>上面的 sitemap 配置好了之后就可以向 <a href="https://search.google.com" target="_blank" rel="noopener">GoogleSearchConsole</a> 提交我们的站点。</p>
+<p><img src="https://site.itgrocery.cn/2019/media/15768975014334.jpg" alt="-w768"></p>
+<p>添加网站的时候需要 DNS 验证，按照 Google 给出的提示进行验证。</p>
+<p>完整站点的验证之后提交自己的站点地图，过几天 Google 就会去收录自己的站点。</p>
+<p><img src="https://site.itgrocery.cn/2019/media/15768976661719.jpg" alt="-w1680"></p>
+<h2 id="解决站点死链"><a href="#解决站点死链" class="headerlink" title="解决站点死链"></a>解决站点死链</h2><p>有时候我们的网页失效了，或者位置变化了，但是 Google 收录的索引一直没有更新，很多用户点击链接时都进入到了 404 页面。为了避免上述的情况发生，我们可以主动向 Google 提交需要删除的 URL。</p>
+<p>目前新版的 GoogleSearchConsole 删除入口还无法进入，需要使用<a href="https://www.google.com/webmasters/tools/removals" target="_blank" rel="noopener">链接</a>进入。</p>
+<p><img src="https://site.itgrocery.cn/2019/media/15768979348245.jpg" alt="-w1667"></p>
+<p>提交 URL 之后过一段时间 Google 就会过来处理，如果提交错了可以取消删除，否则该网页可能永久都不会被 Google 收录。</p>
+
+    </div>
+
+    
+    
+    
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <div class="reward-container">
+  <div>如果觉得我的文章对您有用，请查看广告（Google Ads）或扫码。您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="itren(香农) 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="itren(香农) 支付宝">
+        <p>支付宝</p>
+      </div>
+      <div style="display: inline-block;">
+        <img src="/images/paypal.png" alt="itren(香农) PayPal">
+        <p>PayPal</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>itren(香农)
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.itgrocery.cn/posts/3398c822/" title="优化 Hexo 提升站点的 SEO">https://www.itgrocery.cn/posts/3398c822/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/hexo/" rel="tag"><i class="fa fa-tag"></i> hexo</a>
+          </div>
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/67d118b2/" rel="prev" title="利用阿里云加速 Hexo 静态博客">
+      <i class="fa fa-chevron-left"></i> 利用阿里云加速 Hexo 静态博客
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/7a6c0275/" rel="next" title="排查 2.6.x dubbo-admin 消费者管理页面崩溃问题">
+      排查 2.6.x dubbo-admin 消费者管理页面崩溃问题 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用固定链接"><span class="nav-number">1.</span> <span class="nav-text">使用固定链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开启-SiteMap"><span class="nav-number">2.</span> <span class="nav-text">开启 SiteMap</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#提交网站到搜索引擎"><span class="nav-number">3.</span> <span class="nav-text">提交网站到搜索引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决站点死链"><span class="nav-number">4.</span> <span class="nav-text">解决站点死链</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="itren(香农)"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">itren(香农)</p>
+  <div class="site-description" itemprop="description">程序员👨‍💻杂记</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://t.me/titren" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;titren" rel="noopener" target="_blank"><i class="fa fa-fw fa-telegram"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/itren" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;itren" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:itren.tech@gmail.com" title="E-Mail → mailto:itren.tech@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Friend Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.iissnan.com/" title="https:&#x2F;&#x2F;theme-next.iissnan.com" rel="noopener" target="_blank">NexT Theme</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://fontawesome.com/" title="https:&#x2F;&#x2F;fontawesome.com" rel="noopener" target="_blank">Font Awesome</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://freessl.cn/" title="https:&#x2F;&#x2F;freessl.cn" rel="noopener" target="_blank">FreeSSL</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://realfavicongenerator.net/" title="https:&#x2F;&#x2F;realfavicongenerator.net" rel="noopener" target="_blank">Favicon Generator</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.alibabacloud.com/" title="https:&#x2F;&#x2F;www.alibabacloud.com" rel="noopener" target="_blank">Alibaba Cloud</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://geektutu.com/" title="https:&#x2F;&#x2F;geektutu.com" rel="noopener" target="_blank">极客兔兔</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.shuziyimin.org/" title="https:&#x2F;&#x2F;blog.shuziyimin.org" rel="noopener" target="_blank">数字移民</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- SIDEBAR_AUTO -->
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:200px"
+           data-ad-client="ca-pub-1876891583962196"
+           data-ad-slot="9161595375"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备17022212号-1 </a>
+      <img src="/images/beian.png" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42098102000038" rel="noopener" target="_blank">鄂公网安备42098102000038 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2017 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">itren(香农)</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.1.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+  <script>
+  function leancloudSelector(url) {
+    return document.getElementById(url).querySelector('.leancloud-visitors-count');
+  }
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = visitors.getAttribute('id').trim();
+      var title = visitors.getAttribute('data-flag-title').trim();
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+              leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .then(response => response.json())
+              .catch(error => {
+                console.log('Failed to save visitor count', error);
+              })
+          } else {
+              Counter('post', '/classes/Counter', { title: title, url: url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.log('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return element.getAttribute('id').trim();
+      });
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url: { '$in': entries } })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length === 0) {
+            document.querySelectorAll('.leancloud_visitors .leancloud-visitors-count').forEach(element => {
+              element.innerText = 0;
+            });
+            return;
+          }
+          for (let item of results) {
+            let { url, time } = item;
+            leancloudSelector(url).innerText = time;
+          }
+          for (let url of entries) {
+            var element = leancloudSelector(url);
+            if (element.innerText == '') {
+              element.innerText = 0;
+            }
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  }
+
+  fetch('https://app-router.leancloud.cn/2/route?appId=nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz')
+    .then(response => response.json())
+    .then(({ api_server }) => {
+      var Counter = (method, url, data) => {
+        return fetch(`https://${api_server}/1.1${url}`, {
+          method: method,
+          headers: {
+            'X-LC-Id': 'nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz',
+            'X-LC-Key': 'wBvPvCEiSnYiIBMeNWU31UEC',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script color='0,0,255' opacity='0.2' zIndex='-1' count='50' src="/lib/canvas-nest/canvas-nest-nomobile.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout: 3000,
+        priority: true,
+        ignores: [uri => uri.includes('#'),uri => uri == 'https://www.itgrocery.cn/posts/3398c822/',]
+      });
+      });
+  </script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'f75b0968ac4219322421',
+      clientSecret: '1c81b8b3343c7d43b8aa324fa2c0524251be5f7e',
+      repo: 'itren.github.io',
+      owner: 'itren',
+      admin: ['itren'],
+      id: 'ee91a3697b19774d2402ff38c91be7cf',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

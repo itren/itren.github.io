@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-itren.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-itren.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-itren.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-flash.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://www.itgrocery.cn').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"manual"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":false,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+<script data-ad-client="ca-pub-1876891583962196" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <meta name="description" content="Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景。官方也许因为版权原因没有提供 oracle 的插件，oracle 在实际场景中还是使用的非常多的，有必要介绍些插件开发的流程。如果读者只是部署，不做开发，可以 clone 我托管在 GitHub 的Presto 来进行编译、部署。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Presto Oracle 插件编写教程">
+<meta property="og:url" content="https:&#x2F;&#x2F;www.itgrocery.cn&#x2F;posts&#x2F;a7895520&#x2F;index.html">
+<meta property="og:site_name" content="IT杂货铺">
+<meta property="og:description" content="Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景。官方也许因为版权原因没有提供 oracle 的插件，oracle 在实际场景中还是使用的非常多的，有必要介绍些插件开发的流程。如果读者只是部署，不做开发，可以 clone 我托管在 GitHub 的Presto 来进行编译、部署。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781152880509.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781153734779.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781153846079.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781154142633.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781154252940.jpg">
+<meta property="article:published_time" content="2017-05-03T15:29:53.000Z">
+<meta property="article:modified_time" content="2020-01-04T05:08:41.000Z">
+<meta property="article:author" content="itren(香农)">
+<meta property="article:tag" content="presto">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781152880509.jpg">
+
+<link rel="canonical" href="https://www.itgrocery.cn/posts/a7895520/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Presto Oracle 插件编写教程 | IT杂货铺</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154647738-2"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-154647738-2');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="IT杂货铺" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">IT杂货铺</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">技术、人、生活</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">15</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">31</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.itgrocery.cn/posts/a7895520/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="itren(香农)">
+      <meta itemprop="description" content="程序员👨‍💻杂记">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="IT杂货铺">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          Presto Oracle 插件编写教程
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-05-03 23:29:53" itemprop="dateCreated datePublished" datetime="2017-05-03T23:29:53+08:00">2017-05-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-01-04 13:08:41" itemprop="dateModified" datetime="2020-01-04T13:08:41+08:00">2020-01-04</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/bigdata/" itemprop="url" rel="index">
+                    <span itemprop="name">bigdata</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/a7895520/" class="post-meta-item leancloud_visitors" data-flag-title="Presto Oracle 插件编写教程" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>21k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>19 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <p>Presto 是一个分布式的 SQL 查询引擎，非常适合用于 OLAP 场景。官方也许因为版权原因没有提供 oracle 的插件，oracle 在实际场景中还是使用的非常多的，有必要介绍些插件开发的流程。如果读者只是部署，不做开发，可以 clone 我托管在 GitHub 的<a href="https://github.com/itren/presto-with-oracle" target="_blank" rel="noopener">Presto</a> 来进行编译、部署。</p>
+<a id="more"></a>
+
+<h2 id="搭建开发环境"><a href="#搭建开发环境" class="headerlink" title="搭建开发环境"></a>搭建开发环境</h2><p>关于如何搭建开发环境，presto 的 github 首页已经给出教程，这里不再赘述。但是要注意<strong>presto 在 windows 平台下会编译失败</strong>，而且对源码开发之前必须要先编译 presto。这里推荐使用 IntelliJIDEA 作为开发的 IDE， 如果你已经将 presto 导入到 IDE 中，并且成功运行“PrestoServer”，那么你已经成功一半了，其实在 github 上面有人已经托管了<a href="https://github.com/marcelopaesrech/presto-oracle" target="_blank" rel="noopener">presto-oracle</a>这个插件，但是这个插件只能满足简单的查询，无法通过 presto 向 oracle 中插入数据。而且它这个不是集成到 presto 的源码中的，无法对插件进行调试。</p>
+<h2 id="新建-module"><a href="#新建-module" class="headerlink" title="新建 module"></a>新建 module</h2><p>官方已经编写了 MySQL 插件，我们可以按照这个模板来开发。我们在 Presto 的根目录下新建 module，该 module 的 pom 信息如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version&#x3D;&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;project xmlns&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0&quot; xmlns:xsi&#x3D;&quot;http:&#x2F;&#x2F;www.w3.org&#x2F;2001&#x2F;XMLSchema-instance&quot; xsi:schemaLocation&#x3D;&quot;http:&#x2F;&#x2F;maven.apache.org&#x2F;POM&#x2F;4.0.0 http:&#x2F;&#x2F;maven.apache.org&#x2F;xsd&#x2F;maven-4.0.0.xsd&quot;&gt;</span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;&#x2F;modelVersion&gt;</span><br><span class="line"></span><br><span class="line">    &lt;parent&gt;</span><br><span class="line">        &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;presto-root&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;version&gt;0.157.2-SNAPSHOT&lt;&#x2F;version&gt;</span><br><span class="line">    &lt;&#x2F;parent&gt;</span><br><span class="line"></span><br><span class="line">    &lt;artifactId&gt;presto-oracle&lt;&#x2F;artifactId&gt;</span><br><span class="line">    &lt;description&gt;Presto - Oracle Connector&lt;&#x2F;description&gt;</span><br><span class="line">    &lt;packaging&gt;presto-plugin&lt;&#x2F;packaging&gt;</span><br><span class="line"></span><br><span class="line">    &lt;properties&gt;</span><br><span class="line">        &lt;!--check license--&gt;</span><br><span class="line">        &lt;air.main.basedir&gt;$&#123;project.parent.basedir&#125;&lt;&#x2F;air.main.basedir&gt;</span><br><span class="line">    &lt;&#x2F;properties&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;presto-base-jdbc&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;configuration&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.google.guava&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;guava&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.google.inject&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;guice&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;javax.validation&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;validation-api&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.oracle&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;ojdbc6&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;javax.inject&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;javax.inject&lt;&#x2F;artifactId&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;!-- Presto SPI --&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;presto-spi&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;provided&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;slice&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;provided&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;units&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;provided&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.fasterxml.jackson.core&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;jackson-annotations&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;provided&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;!-- for testing --&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.testng&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;testng&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;testing&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;json&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;presto-main&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;presto-tpch&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift.tpch&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;tpch&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;com.facebook.presto&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;presto-tests&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line"></span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;io.airlift&lt;&#x2F;groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;testing-mysql-server&lt;&#x2F;artifactId&gt;</span><br><span class="line">            &lt;scope&gt;test&lt;&#x2F;scope&gt;</span><br><span class="line">        &lt;&#x2F;dependency&gt;</span><br><span class="line">    &lt;&#x2F;dependencies&gt;</span><br><span class="line"></span><br><span class="line">    &lt;build&gt;</span><br><span class="line"></span><br><span class="line">        &lt;plugins&gt;</span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;&#x2F;groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-dependency-plugin&lt;&#x2F;artifactId&gt;</span><br><span class="line">                &lt;version&gt;2.10&lt;&#x2F;version&gt;</span><br><span class="line">                &lt;configuration&gt;</span><br><span class="line">                    &lt;!--disable check dependency--&gt;</span><br><span class="line">                    &lt;skip&gt;true&lt;&#x2F;skip&gt;</span><br><span class="line">                    &lt;failOnWarning&gt;$&#123;air.check.fail-dependency&#125;&lt;&#x2F;failOnWarning&gt;</span><br><span class="line">                    &lt;ignoreNonCompile&gt;true&lt;&#x2F;ignoreNonCompile&gt;</span><br><span class="line">                &lt;&#x2F;configuration&gt;</span><br><span class="line">            &lt;&#x2F;plugin&gt;</span><br><span class="line"></span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;&#x2F;groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-checkstyle-plugin&lt;&#x2F;artifactId&gt;</span><br><span class="line">                &lt;executions&gt;</span><br><span class="line">                    &lt;execution&gt;</span><br><span class="line">                        &lt;phase&gt;validate&lt;&#x2F;phase&gt;</span><br><span class="line">                        &lt;goals&gt;</span><br><span class="line">                            &lt;goal&gt;check&lt;&#x2F;goal&gt;</span><br><span class="line">                        &lt;&#x2F;goals&gt;</span><br><span class="line">                        &lt;configuration&gt;</span><br><span class="line">                            &lt;!--disable check code style--&gt;</span><br><span class="line">                            &lt;skip&gt;true&lt;&#x2F;skip&gt;</span><br><span class="line">                        &lt;&#x2F;configuration&gt;</span><br><span class="line">                    &lt;&#x2F;execution&gt;</span><br><span class="line">                &lt;&#x2F;executions&gt;</span><br><span class="line"></span><br><span class="line">            &lt;&#x2F;plugin&gt;</span><br><span class="line"></span><br><span class="line">        &lt;&#x2F;plugins&gt;</span><br><span class="line">    &lt;&#x2F;build&gt;</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;project&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这里需要说明下的是 Maven 的公共库查找不到 Oracle JDBC 的依赖，所以需要用户自行下载 jar 包并安装到本地 Maven 库中。另外 Presto 有很严格的代码规范以及依赖检查，如果代码或者依赖不通过检查是无法编译成功的。而且公共 Maven 库中无法找到 Oracle JDBC 的依赖，所以依赖检查肯定不能通过。所以我在 pom 文件中禁用了代码规范检查插件，还有依赖检查插件。</p>
+<h3 id="1-禁用依赖检查"><a href="#1-禁用依赖检查" class="headerlink" title="1. 禁用依赖检查"></a>1. 禁用依赖检查</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;plugin&gt;</span><br><span class="line">              &lt;groupId&gt;org.apache.maven.plugins&lt;&#x2F;groupId&gt;</span><br><span class="line">              &lt;artifactId&gt;maven-dependency-plugin&lt;&#x2F;artifactId&gt;</span><br><span class="line">              &lt;version&gt;2.10&lt;&#x2F;version&gt;</span><br><span class="line">              &lt;configuration&gt;</span><br><span class="line">                  &lt;!--disable check dependency--&gt;</span><br><span class="line">                  &lt;skip&gt;true&lt;&#x2F;skip&gt;</span><br><span class="line">                  &lt;failOnWarning&gt;$&#123;air.check.fail-dependency&#125;&lt;&#x2F;failOnWarning&gt;</span><br><span class="line">                  &lt;ignoreNonCompile&gt;true&lt;&#x2F;ignoreNonCompile&gt;</span><br><span class="line">              &lt;&#x2F;configuration&gt;</span><br><span class="line">          &lt;&#x2F;plugin&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-禁用代码规范检查"><a href="#2-禁用代码规范检查" class="headerlink" title="2. 禁用代码规范检查"></a>2. 禁用代码规范检查</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;plugin&gt;</span><br><span class="line">              &lt;groupId&gt;org.apache.maven.plugins&lt;&#x2F;groupId&gt;</span><br><span class="line">              &lt;artifactId&gt;maven-checkstyle-plugin&lt;&#x2F;artifactId&gt;</span><br><span class="line">              &lt;executions&gt;</span><br><span class="line">                  &lt;execution&gt;</span><br><span class="line">                      &lt;phase&gt;validate&lt;&#x2F;phase&gt;</span><br><span class="line">                      &lt;goals&gt;</span><br><span class="line">                          &lt;goal&gt;check&lt;&#x2F;goal&gt;</span><br><span class="line">                      &lt;&#x2F;goals&gt;</span><br><span class="line">                      &lt;configuration&gt;</span><br><span class="line">                          &lt;!--disable check code style--&gt;</span><br><span class="line">                          &lt;skip&gt;true&lt;&#x2F;skip&gt;</span><br><span class="line">                      &lt;&#x2F;configuration&gt;</span><br><span class="line">                  &lt;&#x2F;execution&gt;</span><br><span class="line">              &lt;&#x2F;executions&gt;</span><br><span class="line">          &lt;&#x2F;plugin&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-在-presto-root-下添加-ojdbc-的依赖信息"><a href="#3-在-presto-root-下添加-ojdbc-的依赖信息" class="headerlink" title="3. 在 presto-root 下添加 ojdbc 的依赖信息"></a>3. 在 presto-root 下添加 ojdbc 的依赖信息</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">              &lt;groupId&gt;com.oracle&lt;&#x2F;groupId&gt;</span><br><span class="line">              &lt;artifactId&gt;ojdbc6&lt;&#x2F;artifactId&gt;</span><br><span class="line">              &lt;version&gt;11.2.0.4.0-atlassian-hosted&lt;&#x2F;version&gt;</span><br><span class="line">          &lt;&#x2F;dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="集成-module-到-Presto"><a href="#集成-module-到-Presto" class="headerlink" title="集成 module 到 Presto"></a>集成 module 到 Presto</h2><p>因为我们是基于源码开发的，为了将 presto-oracle 集成到 Presto 中进行测试以及打包发布还需如下配置：</p>
+<h3 id="1-修改config-properties-配置文件"><a href="#1-修改config-properties-配置文件" class="headerlink" title="1.修改config.properties 配置文件"></a>1.修改config.properties 配置文件</h3><p>config.properties 文件在“presto/presto-main/etc”路径下，在plugin.bundles 下添加“../presto-oracle/pom.xml”。 </p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781152880509.jpg" alt=""></p>
+<p><strong>只有添加了 presto-oracle 的 pom 信息 presto 在 IDE 中调试时再回加载 presto-oracle 插件，否则无效</strong>，上述配置只是用于开发环境，正式环境下无需配置。</p>
+<h3 id="2-修改-presto-xml-配置文件-presto-xml-文件在“presto-presto-server-src-main-provisio”路径下，添加如下配置信息："><a href="#2-修改-presto-xml-配置文件-presto-xml-文件在“presto-presto-server-src-main-provisio”路径下，添加如下配置信息：" class="headerlink" title="2. 修改 presto.xml 配置文件 presto.xml 文件在“presto/presto-server/src/main/provisio”路径下，添加如下配置信息："></a>2. 修改 presto.xml 配置文件 presto.xml 文件在“presto/presto-server/src/main/provisio”路径下，添加如下配置信息：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;artifactSet to&#x3D;&quot;plugin&#x2F;oracle&quot;&gt;</span><br><span class="line">      &lt;artifact id&#x3D;&quot;$&#123;project.groupId&#125;:presto-oracle:zip:$&#123;project.version&#125;&quot;&gt;</span><br><span class="line">          &lt;unpack &#x2F;&gt;</span><br><span class="line">      &lt;&#x2F;artifact&gt;</span><br><span class="line">  &lt;&#x2F;artifactSet&gt;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://site.itgrocery.cn/2017/media/15781153734779.jpg" alt=""></p>
+<p>上述配置的作用是在 presto 编译时可以将我们的 presto-oracle 插件添加到 plugin 目录下。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781153846079.jpg" alt=""></p>
+<h2 id="编写代码"><a href="#编写代码" class="headerlink" title="编写代码"></a>编写代码</h2><p>插件的代码就四个类，一点都不复杂，但是需要说明的是这些代码必须包含 license 信息，因为 presto 配置了证书的检查插件，如果代码中不包含license 编译时会报错。这个不像代码检查那么麻烦，代码检查有一点点不规范就会报错，这个证书检查只要在自己新建的类中添加 license 就即可通过。</p>
+<h3 id="1-OraclePlugin-java"><a href="#1-OraclePlugin-java" class="headerlink" title="1.OraclePlugin.java"></a>1.OraclePlugin.java</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*</span><br><span class="line">* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line">* you may not use this file except in compliance with the License.</span><br><span class="line">* You may obtain a copy of the License at</span><br><span class="line">*</span><br><span class="line">*     http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">*</span><br><span class="line">* Unless required by applicable law or agreed to in writing, software</span><br><span class="line">* distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line">* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line">* See the License for the specific language governing permissions and</span><br><span class="line">* limitations under the License.</span><br><span class="line">*&#x2F;</span><br><span class="line">package com.facebook.presto.plugin.oracle;</span><br><span class="line"></span><br><span class="line">import com.facebook.presto.plugin.jdbc.JdbcPlugin;</span><br><span class="line"></span><br><span class="line">public class OraclePlugin</span><br><span class="line">      extends JdbcPlugin</span><br><span class="line">&#123;</span><br><span class="line">  public OraclePlugin()</span><br><span class="line">  &#123;</span><br><span class="line">      super(&quot;oracle&quot;, new OracleClientModule());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面构造函数中传入的”oracle” 应该是用于后面 catalog 中 name 的配置项，这个猜测没有验证，先这样配置。</p>
+<h3 id="2-OracleConfig-java"><a href="#2-OracleConfig-java" class="headerlink" title="2.OracleConfig.java"></a>2.OracleConfig.java</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*</span><br><span class="line">* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line">* you may not use this file except in compliance with the License.</span><br><span class="line">* You may obtain a copy of the License at</span><br><span class="line">*</span><br><span class="line">*     http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">*</span><br><span class="line">* Unless required by applicable law or agreed to in writing, software</span><br><span class="line">* distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line">* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line">* See the License for the specific language governing permissions and</span><br><span class="line">* limitations under the License.</span><br><span class="line">*&#x2F;</span><br><span class="line">package com.facebook.presto.plugin.oracle;</span><br><span class="line"></span><br><span class="line">import io.airlift.configuration.Config;</span><br><span class="line"></span><br><span class="line">public class OracleConfig &#123;</span><br><span class="line">  private String user;</span><br><span class="line">  private String password;</span><br><span class="line">  private String url;</span><br><span class="line"></span><br><span class="line">  public String getUser() &#123;</span><br><span class="line">      return user;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Config(&quot;oracle.user&quot;)</span><br><span class="line">  public OracleConfig setUser(String user) &#123;</span><br><span class="line">      this.user &#x3D; user;</span><br><span class="line">      return this;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public String getPassword() &#123;</span><br><span class="line">      return password;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Config(&quot;oracle.password&quot;)</span><br><span class="line">  public OracleConfig setPassword(String password) &#123;</span><br><span class="line">      this.password &#x3D; password;</span><br><span class="line">      return this;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  public String getUrl() &#123;</span><br><span class="line">      return url;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Config(&quot;oracle.password&quot;)</span><br><span class="line">  public OracleConfig setUrl(String url) &#123;</span><br><span class="line">      this.url &#x3D; url;</span><br><span class="line">      return this;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述代码中的注解千万不要省略掉，否则 presto 加载 catalog 时无法查找到这些属性。</p>
+<h3 id="3-OracleClientModule-java"><a href="#3-OracleClientModule-java" class="headerlink" title="3.OracleClientModule.java"></a>3.OracleClientModule.java</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*</span><br><span class="line"> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line"> * you may not use this file except in compliance with the License.</span><br><span class="line"> * You may obtain a copy of the License at</span><br><span class="line"> *</span><br><span class="line"> *     http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line"> *</span><br><span class="line"> * Unless required by applicable law or agreed to in writing, software</span><br><span class="line"> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line"> * See the License for the specific language governing permissions and</span><br><span class="line"> * limitations under the License.</span><br><span class="line"> *&#x2F;</span><br><span class="line">package com.facebook.presto.plugin.oracle;</span><br><span class="line"></span><br><span class="line">import com.facebook.presto.plugin.jdbc.BaseJdbcConfig;</span><br><span class="line">import com.facebook.presto.plugin.jdbc.JdbcClient;</span><br><span class="line">import com.google.inject.Binder;</span><br><span class="line">import com.google.inject.Module;</span><br><span class="line">import com.google.inject.Scopes;</span><br><span class="line"></span><br><span class="line">import static io.airlift.configuration.ConfigBinder.configBinder;</span><br><span class="line"></span><br><span class="line">public class OracleClientModule</span><br><span class="line">        implements Module</span><br><span class="line">&#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void configure(Binder binder)</span><br><span class="line">    &#123;</span><br><span class="line">        binder.bind(JdbcClient.class).to(OracleClient.class).in(Scopes.SINGLETON);</span><br><span class="line">        configBinder(binder).bindConfig(BaseJdbcConfig.class);</span><br><span class="line">        configBinder(binder).bindConfig(OracleConfig.class);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-OracleClient-java"><a href="#4-OracleClient-java" class="headerlink" title="4.OracleClient.java"></a>4.OracleClient.java</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*</span><br><span class="line">* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="line">* you may not use this file except in compliance with the License.</span><br><span class="line">* You may obtain a copy of the License at</span><br><span class="line">*</span><br><span class="line">*     http:&#x2F;&#x2F;www.apache.org&#x2F;licenses&#x2F;LICENSE-2.0</span><br><span class="line">*</span><br><span class="line">* Unless required by applicable law or agreed to in writing, software</span><br><span class="line">* distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="line">* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="line">* See the License for the specific language governing permissions and</span><br><span class="line">* limitations under the License.</span><br><span class="line">*&#x2F;</span><br><span class="line">package com.facebook.presto.plugin.oracle;</span><br><span class="line"></span><br><span class="line">import com.facebook.presto.plugin.jdbc.*;</span><br><span class="line">import com.facebook.presto.spi.*;</span><br><span class="line">import com.facebook.presto.spi.type.Type;</span><br><span class="line">import com.google.common.base.Joiner;</span><br><span class="line">import com.google.common.base.Throwables;</span><br><span class="line">import com.google.common.collect.ImmutableList;</span><br><span class="line">import com.google.common.collect.ImmutableSet;</span><br><span class="line">import oracle.jdbc.OracleDriver;</span><br><span class="line"></span><br><span class="line">import javax.annotation.Nullable;</span><br><span class="line">import javax.inject.Inject;</span><br><span class="line"></span><br><span class="line">import java.sql.Connection;</span><br><span class="line">import java.sql.DatabaseMetaData;</span><br><span class="line">import java.sql.ResultSet;</span><br><span class="line">import java.sql.SQLException;</span><br><span class="line">import java.util.ArrayList;</span><br><span class="line">import java.util.List;</span><br><span class="line">import java.util.Set;</span><br><span class="line">import java.util.UUID;</span><br><span class="line"></span><br><span class="line">import static com.facebook.presto.plugin.jdbc.JdbcErrorCode.JDBC_ERROR;</span><br><span class="line">import static com.facebook.presto.spi.StandardErrorCode.NOT_FOUND;</span><br><span class="line">import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;</span><br><span class="line">import static com.google.common.collect.Iterables.getOnlyElement;</span><br><span class="line">import static com.google.common.collect.Maps.fromProperties;</span><br><span class="line">import static java.util.Locale.ENGLISH;</span><br><span class="line"></span><br><span class="line">public class OracleClient</span><br><span class="line">      extends BaseJdbcClient</span><br><span class="line">&#123;</span><br><span class="line">  @Inject</span><br><span class="line">  public OracleClient(JdbcConnectorId connectorId, BaseJdbcConfig config, OracleConfig oracleConfig)</span><br><span class="line">          throws SQLException</span><br><span class="line">  &#123;</span><br><span class="line">      super(connectorId, config, &quot;&quot;, new OracleDriver());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public Set&lt;String&gt; getSchemaNames() &#123;</span><br><span class="line">      try (Connection connection &#x3D; driver.connect(connectionUrl,</span><br><span class="line">              connectionProperties);</span><br><span class="line">           ResultSet resultSet &#x3D; connection.getMetaData().getSchemas()) &#123;</span><br><span class="line">          ImmutableSet.Builder&lt;String&gt; schemaNames &#x3D; ImmutableSet.builder();</span><br><span class="line">          while (resultSet.next()) &#123;</span><br><span class="line">              String schemaName &#x3D; resultSet.getString(1).toLowerCase();</span><br><span class="line">              schemaNames.add(schemaName);</span><br><span class="line">          &#125;</span><br><span class="line">          return schemaNames.build();</span><br><span class="line">      &#125; catch (SQLException e) &#123;</span><br><span class="line">          throw Throwables.propagate(e);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  protected ResultSet getTables(Connection connection, String schemaName, String tableName) throws SQLException &#123;</span><br><span class="line">      return connection.getMetaData().getTables(null, schemaName, tableName,</span><br><span class="line">              new String[] &#123; &quot;TABLE&quot;, &quot;SYNONYM&quot; &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Nullable</span><br><span class="line">  @Override</span><br><span class="line">  public JdbcTableHandle getTableHandle(SchemaTableName schemaTableName) &#123;</span><br><span class="line">      try (Connection connection &#x3D; driver.connect(connectionUrl,</span><br><span class="line">              connectionProperties)) &#123;</span><br><span class="line">          DatabaseMetaData metadata &#x3D; connection.getMetaData();</span><br><span class="line">          String jdbcSchemaName &#x3D; schemaTableName.getSchemaName();</span><br><span class="line">          String jdbcTableName &#x3D; schemaTableName.getTableName();</span><br><span class="line">          if (metadata.storesUpperCaseIdentifiers()) &#123;</span><br><span class="line">              jdbcSchemaName &#x3D; jdbcSchemaName.toUpperCase();</span><br><span class="line">              jdbcTableName &#x3D; jdbcTableName.toUpperCase();</span><br><span class="line">          &#125;</span><br><span class="line">          try (ResultSet resultSet &#x3D; getTables(connection, jdbcSchemaName,</span><br><span class="line">                  jdbcTableName)) &#123;</span><br><span class="line">              List&lt;JdbcTableHandle&gt; tableHandles &#x3D; new ArrayList&lt;&gt;();</span><br><span class="line">              while (resultSet.next()) &#123;</span><br><span class="line">                  tableHandles.add(new JdbcTableHandle(connectorId,</span><br><span class="line">                          schemaTableName, resultSet.getString(&quot;TABLE_CAT&quot;),</span><br><span class="line">                          resultSet.getString(&quot;TABLE_SCHEM&quot;), resultSet</span><br><span class="line">                          .getString(&quot;TABLE_NAME&quot;)));</span><br><span class="line">              &#125;</span><br><span class="line">              if (tableHandles.isEmpty()) &#123;</span><br><span class="line">                  return null;</span><br><span class="line">              &#125;</span><br><span class="line">              if (tableHandles.size() &gt; 1) &#123;</span><br><span class="line">                  throw new PrestoException(NOT_SUPPORTED,</span><br><span class="line">                          &quot;Multiple tables matched: &quot; + schemaTableName);</span><br><span class="line">              &#125;</span><br><span class="line">              return getOnlyElement(tableHandles);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125; catch (SQLException e) &#123;</span><br><span class="line">          throw Throwables.propagate(e);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public List&lt;JdbcColumnHandle&gt; getColumns(JdbcTableHandle tableHandle) &#123;</span><br><span class="line">      try (Connection connection &#x3D; driver.connect(connectionUrl,</span><br><span class="line">              connectionProperties)) &#123;</span><br><span class="line"></span><br><span class="line">          ( (oracle.jdbc.driver.OracleConnection)connection ).setIncludeSynonyms(true);</span><br><span class="line">          DatabaseMetaData metadata &#x3D; connection.getMetaData();</span><br><span class="line">          String schemaName &#x3D; tableHandle.getSchemaName().toUpperCase();</span><br><span class="line">          String tableName &#x3D; tableHandle.getTableName().toUpperCase();</span><br><span class="line">          try (ResultSet resultSet &#x3D; metadata.getColumns(null, schemaName,</span><br><span class="line">                  tableName, null)) &#123;</span><br><span class="line">              List&lt;JdbcColumnHandle&gt; columns &#x3D; new ArrayList&lt;&gt;();</span><br><span class="line">              boolean found &#x3D; false;</span><br><span class="line">              while (resultSet.next()) &#123;</span><br><span class="line">                  found &#x3D; true;</span><br><span class="line">                  Type columnType &#x3D; toPrestoType(resultSet</span><br><span class="line">                          .getInt(&quot;DATA_TYPE&quot;), resultSet.getInt(&quot;COLUMN_SIZE&quot;));</span><br><span class="line">                  if (columnType !&#x3D; null) &#123;</span><br><span class="line">                      String columnName &#x3D; resultSet.getString(&quot;COLUMN_NAME&quot;);</span><br><span class="line">                      columns.add(new JdbcColumnHandle(connectorId,</span><br><span class="line">                              columnName, columnType));</span><br><span class="line">                  &#125;</span><br><span class="line">              &#125;</span><br><span class="line">              if (!found) &#123;</span><br><span class="line">                  throw new TableNotFoundException(</span><br><span class="line">                          tableHandle.getSchemaTableName());</span><br><span class="line">              &#125;</span><br><span class="line">              if (columns.isEmpty()) &#123;</span><br><span class="line">                  throw new PrestoException(NOT_SUPPORTED,</span><br><span class="line">                          &quot;Table has no supported column types: &quot;</span><br><span class="line">                                  + tableHandle.getSchemaTableName());</span><br><span class="line">              &#125;</span><br><span class="line">              return ImmutableList.copyOf(columns);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125; catch (SQLException e) &#123;</span><br><span class="line">          throw Throwables.propagate(e);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public List&lt;SchemaTableName&gt; getTableNames(@Nullable String schema) &#123;</span><br><span class="line">      try (Connection connection &#x3D; driver.connect(connectionUrl,</span><br><span class="line">              connectionProperties)) &#123;</span><br><span class="line">          DatabaseMetaData metadata &#x3D; connection.getMetaData();</span><br><span class="line">          if (metadata.storesUpperCaseIdentifiers() &amp;&amp; (schema !&#x3D; null)) &#123;</span><br><span class="line">              schema &#x3D; schema.toUpperCase();</span><br><span class="line">          &#125;</span><br><span class="line">          try (ResultSet resultSet &#x3D; getTables(connection, schema, null)) &#123;</span><br><span class="line">              ImmutableList.Builder&lt;SchemaTableName&gt; list &#x3D; ImmutableList</span><br><span class="line">                      .builder();</span><br><span class="line">              while (resultSet.next()) &#123;</span><br><span class="line">                  list.add(getSchemaTableName(resultSet));</span><br><span class="line">              &#125;</span><br><span class="line">              return list.build();</span><br><span class="line">          &#125;</span><br><span class="line">      &#125; catch (SQLException e) &#123;</span><br><span class="line">          throw Throwables.propagate(e);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  protected SchemaTableName getSchemaTableName(ResultSet resultSet) throws SQLException &#123;</span><br><span class="line">      String tableSchema &#x3D; resultSet.getString(&quot;TABLE_SCHEM&quot;);</span><br><span class="line">      String tableName &#x3D; resultSet.getString(&quot;TABLE_NAME&quot;);</span><br><span class="line">      if (tableSchema !&#x3D; null) &#123;</span><br><span class="line">          tableSchema &#x3D; tableSchema.toLowerCase();</span><br><span class="line">      &#125;</span><br><span class="line">      if (tableName !&#x3D; null) &#123;</span><br><span class="line">          tableName &#x3D; tableName.toLowerCase();</span><br><span class="line">      &#125;</span><br><span class="line">      return new SchemaTableName(tableSchema, tableName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public void commitCreateTable(JdbcOutputTableHandle handle) &#123;</span><br><span class="line">      StringBuilder sql &#x3D; new StringBuilder()</span><br><span class="line">              .append(&quot;ALTER TABLE &quot;)</span><br><span class="line">              .append(quoted(handle.getCatalogName(), handle.getSchemaName(), handle.getTemporaryTableName()))</span><br><span class="line">              .append(&quot; RENAME TO &quot;)</span><br><span class="line">              &#x2F;&#x2F;new table name needn&#39;t to be with catalog and schema</span><br><span class="line">              .append(handle.getTableName());</span><br><span class="line"></span><br><span class="line">      try (Connection connection &#x3D; getConnection(handle)) &#123;</span><br><span class="line">          execute(connection, sql.toString());</span><br><span class="line">      &#125;</span><br><span class="line">      catch (SQLException e) &#123;</span><br><span class="line">          throw new PrestoException(JDBC_ERROR, e);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述代码中覆写了很多方法，主要是不同的数据库规则不一样，需要我们一一适配。之前提到过 github 中已经有人托管了<a href="https://github.com/marcelopaesrech/presto-oracle" target="_blank" rel="noopener">presto-oracle</a> 的插件，但是这个插件没有适配好。例如我又覆写了<strong>commitCreateTable</strong> 这个方法，主要是因为 oracle 中修改表名时新表名不需要再添加 schema ，否则会报错。</p>
+<h3 id="5-BaseJdbcClient-java"><a href="#5-BaseJdbcClient-java" class="headerlink" title="5.BaseJdbcClient.java"></a>5.BaseJdbcClient.java</h3><p>“BaseJdbcClient”是“OracleClient”的基类，它里面有一个方法涉及到创建临时表的方法，oracle 中表名有长度限制（30以内），所以我对表名进行了字符串的截取操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">private JdbcOutputTableHandle beginWriteTable(ConnectorTableMetadata tableMetadata)</span><br><span class="line"> &#123;</span><br><span class="line">     SchemaTableName schemaTableName &#x3D; tableMetadata.getTable();</span><br><span class="line">     String schema &#x3D; schemaTableName.getSchemaName();</span><br><span class="line">     String table &#x3D; schemaTableName.getTableName();</span><br><span class="line"></span><br><span class="line">     if (!getSchemaNames().contains(schema)) &#123;</span><br><span class="line">         throw new PrestoException(NOT_FOUND, &quot;Schema not found: &quot; + schema);</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     try (Connection connection &#x3D; driver.connect(connectionUrl, connectionProperties)) &#123;</span><br><span class="line">         boolean uppercase &#x3D; connection.getMetaData().storesUpperCaseIdentifiers();</span><br><span class="line">         if (uppercase) &#123;</span><br><span class="line">             schema &#x3D; schema.toUpperCase(ENGLISH);</span><br><span class="line">             table &#x3D; table.toUpperCase(ENGLISH);</span><br><span class="line">         &#125;</span><br><span class="line">         String catalog &#x3D; connection.getCatalog();</span><br><span class="line"></span><br><span class="line">         String temporaryName &#x3D; &quot;tmp_presto_&quot; + UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;);</span><br><span class="line">         temporaryName &#x3D; temporaryName.substring(0, 29);</span><br><span class="line">         StringBuilder sql &#x3D; new StringBuilder()</span><br><span class="line">                 .append(&quot;CREATE TABLE &quot;)</span><br><span class="line">                 .append(quoted(catalog, schema, temporaryName))</span><br><span class="line">                 .append(&quot; (&quot;);</span><br><span class="line">         ImmutableList.Builder&lt;String&gt; columnNames &#x3D; ImmutableList.builder();</span><br><span class="line">         ImmutableList.Builder&lt;Type&gt; columnTypes &#x3D; ImmutableList.builder();</span><br><span class="line">         ImmutableList.Builder&lt;String&gt; columnList &#x3D; ImmutableList.builder();</span><br><span class="line">         for (ColumnMetadata column : tableMetadata.getColumns()) &#123;</span><br><span class="line">             String columnName &#x3D; column.getName();</span><br><span class="line">             if (uppercase) &#123;</span><br><span class="line">                 columnName &#x3D; columnName.toUpperCase(ENGLISH);</span><br><span class="line">             &#125;</span><br><span class="line">             columnNames.add(columnName);</span><br><span class="line">             columnTypes.add(column.getType());</span><br><span class="line">             columnList.add(new StringBuilder()</span><br><span class="line">                     .append(quoted(columnName))</span><br><span class="line">                     .append(&quot; &quot;)</span><br><span class="line">                     .append(toSqlType(column.getType()))</span><br><span class="line">                     .toString());</span><br><span class="line">         &#125;</span><br><span class="line">         Joiner.on(&quot;, &quot;).appendTo(sql, columnList.build());</span><br><span class="line">         sql.append(&quot;)&quot;);</span><br><span class="line"></span><br><span class="line">         execute(connection, sql.toString());</span><br><span class="line"></span><br><span class="line">         return new JdbcOutputTableHandle(</span><br><span class="line">                 connectorId,</span><br><span class="line">                 catalog,</span><br><span class="line">                 schema,</span><br><span class="line">                 table,</span><br><span class="line">                 columnNames.build(),</span><br><span class="line">                 columnTypes.build(),</span><br><span class="line">                 temporaryName,</span><br><span class="line">                 connectionUrl,</span><br><span class="line">                 fromProperties(connectionProperties));</span><br><span class="line">     &#125;</span><br><span class="line">     catch (SQLException e) &#123;</span><br><span class="line">         throw new PrestoException(JDBC_ERROR, e);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译打包"><a href="#编译打包" class="headerlink" title="编译打包"></a>编译打包</h2><p>如果上述操作无误的话，重新编译 presto。编译成功之后会有 tar.gz 和 rpm 两种安装包。</p>
+<h3 id="1-tar-gz-文件"><a href="#1-tar-gz-文件" class="headerlink" title="1.tar.gz 文件"></a>1.tar.gz 文件</h3><p>tar.gz 文件路径：presto/presto-srver/target </p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781154142633.jpg" alt=""></p>
+<h3 id="2-rpm-文件路径：presto-presto-server-rpm-target"><a href="#2-rpm-文件路径：presto-presto-server-rpm-target" class="headerlink" title="2.rpm 文件路径：presto/presto-server-rpm/target"></a>2.rpm 文件路径：presto/presto-server-rpm/target</h3><p><img src="https://site.itgrocery.cn/2017/media/15781154252940.jpg" alt=""></p>
+<p>如果上述操作出现问题，可以参照我托管的 <a href="https://github.com/itren/presto-with-oracle" target="_blank" rel="noopener">Presto</a>，也可以留言与我共同探讨 。</p>
+
+    </div>
+
+    
+    
+    
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <div class="reward-container">
+  <div>如果觉得我的文章对您有用，请查看广告（Google Ads）或扫码。您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="itren(香农) 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="itren(香农) 支付宝">
+        <p>支付宝</p>
+      </div>
+      <div style="display: inline-block;">
+        <img src="/images/paypal.png" alt="itren(香农) PayPal">
+        <p>PayPal</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>itren(香农)
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.itgrocery.cn/posts/a7895520/" title="Presto Oracle 插件编写教程">https://www.itgrocery.cn/posts/a7895520/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/presto/" rel="tag"><i class="fa fa-tag"></i> presto</a>
+          </div>
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/d99010b6/" rel="prev" title="Presto 向分区表快速插入数据时出现“target directory already exists”的原因">
+      <i class="fa fa-chevron-left"></i> Presto 向分区表快速插入数据时出现“target directory already exists”的原因
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/5e88c976/" rel="next" title="MyBatis3.4.1+版本后无需指定参数名">
+      MyBatis3.4.1+版本后无需指定参数名 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建开发环境"><span class="nav-number">1.</span> <span class="nav-text">搭建开发环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#新建-module"><span class="nav-number">2.</span> <span class="nav-text">新建 module</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-禁用依赖检查"><span class="nav-number">2.1.</span> <span class="nav-text">1. 禁用依赖检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-禁用代码规范检查"><span class="nav-number">2.2.</span> <span class="nav-text">2. 禁用代码规范检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-在-presto-root-下添加-ojdbc-的依赖信息"><span class="nav-number">2.3.</span> <span class="nav-text">3. 在 presto-root 下添加 ojdbc 的依赖信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集成-module-到-Presto"><span class="nav-number">3.</span> <span class="nav-text">集成 module 到 Presto</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-修改config-properties-配置文件"><span class="nav-number">3.1.</span> <span class="nav-text">1.修改config.properties 配置文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-修改-presto-xml-配置文件-presto-xml-文件在“presto-presto-server-src-main-provisio”路径下，添加如下配置信息："><span class="nav-number">3.2.</span> <span class="nav-text">2. 修改 presto.xml 配置文件 presto.xml 文件在“presto&#x2F;presto-server&#x2F;src&#x2F;main&#x2F;provisio”路径下，添加如下配置信息：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编写代码"><span class="nav-number">4.</span> <span class="nav-text">编写代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-OraclePlugin-java"><span class="nav-number">4.1.</span> <span class="nav-text">1.OraclePlugin.java</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-OracleConfig-java"><span class="nav-number">4.2.</span> <span class="nav-text">2.OracleConfig.java</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-OracleClientModule-java"><span class="nav-number">4.3.</span> <span class="nav-text">3.OracleClientModule.java</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-OracleClient-java"><span class="nav-number">4.4.</span> <span class="nav-text">4.OracleClient.java</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-BaseJdbcClient-java"><span class="nav-number">4.5.</span> <span class="nav-text">5.BaseJdbcClient.java</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编译打包"><span class="nav-number">5.</span> <span class="nav-text">编译打包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-tar-gz-文件"><span class="nav-number">5.1.</span> <span class="nav-text">1.tar.gz 文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-rpm-文件路径：presto-presto-server-rpm-target"><span class="nav-number">5.2.</span> <span class="nav-text">2.rpm 文件路径：presto&#x2F;presto-server-rpm&#x2F;target</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="itren(香农)"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">itren(香农)</p>
+  <div class="site-description" itemprop="description">程序员👨‍💻杂记</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://t.me/titren" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;titren" rel="noopener" target="_blank"><i class="fa fa-fw fa-telegram"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/itren" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;itren" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:itren.tech@gmail.com" title="E-Mail → mailto:itren.tech@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Friend Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.iissnan.com/" title="https:&#x2F;&#x2F;theme-next.iissnan.com" rel="noopener" target="_blank">NexT Theme</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://fontawesome.com/" title="https:&#x2F;&#x2F;fontawesome.com" rel="noopener" target="_blank">Font Awesome</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://freessl.cn/" title="https:&#x2F;&#x2F;freessl.cn" rel="noopener" target="_blank">FreeSSL</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://realfavicongenerator.net/" title="https:&#x2F;&#x2F;realfavicongenerator.net" rel="noopener" target="_blank">Favicon Generator</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.alibabacloud.com/" title="https:&#x2F;&#x2F;www.alibabacloud.com" rel="noopener" target="_blank">Alibaba Cloud</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://geektutu.com/" title="https:&#x2F;&#x2F;geektutu.com" rel="noopener" target="_blank">极客兔兔</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.shuziyimin.org/" title="https:&#x2F;&#x2F;blog.shuziyimin.org" rel="noopener" target="_blank">数字移民</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- SIDEBAR_AUTO -->
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:200px"
+           data-ad-client="ca-pub-1876891583962196"
+           data-ad-slot="9161595375"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备17022212号-1 </a>
+      <img src="/images/beian.png" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42098102000038" rel="noopener" target="_blank">鄂公网安备42098102000038 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2017 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">itren(香农)</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.1.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+  <script>
+  function leancloudSelector(url) {
+    return document.getElementById(url).querySelector('.leancloud-visitors-count');
+  }
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = visitors.getAttribute('id').trim();
+      var title = visitors.getAttribute('data-flag-title').trim();
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+              leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .then(response => response.json())
+              .catch(error => {
+                console.log('Failed to save visitor count', error);
+              })
+          } else {
+              Counter('post', '/classes/Counter', { title: title, url: url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.log('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return element.getAttribute('id').trim();
+      });
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url: { '$in': entries } })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length === 0) {
+            document.querySelectorAll('.leancloud_visitors .leancloud-visitors-count').forEach(element => {
+              element.innerText = 0;
+            });
+            return;
+          }
+          for (let item of results) {
+            let { url, time } = item;
+            leancloudSelector(url).innerText = time;
+          }
+          for (let url of entries) {
+            var element = leancloudSelector(url);
+            if (element.innerText == '') {
+              element.innerText = 0;
+            }
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  }
+
+  fetch('https://app-router.leancloud.cn/2/route?appId=nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz')
+    .then(response => response.json())
+    .then(({ api_server }) => {
+      var Counter = (method, url, data) => {
+        return fetch(`https://${api_server}/1.1${url}`, {
+          method: method,
+          headers: {
+            'X-LC-Id': 'nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz',
+            'X-LC-Key': 'wBvPvCEiSnYiIBMeNWU31UEC',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script color='0,0,255' opacity='0.2' zIndex='-1' count='50' src="/lib/canvas-nest/canvas-nest-nomobile.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout: 3000,
+        priority: true,
+        ignores: [uri => uri.includes('#'),uri => uri == 'https://www.itgrocery.cn/posts/a7895520/',]
+      });
+      });
+  </script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'f75b0968ac4219322421',
+      clientSecret: '1c81b8b3343c7d43b8aa324fa2c0524251be5f7e',
+      repo: 'itren.github.io',
+      owner: 'itren',
+      admin: ['itren'],
+      id: '1630420b645787d32fad627af42c8796',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

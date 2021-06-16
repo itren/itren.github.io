@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-itren.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-itren.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-itren.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open Sans:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-flash.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://www.itgrocery.cn').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"manual"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":false,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+<script data-ad-client="ca-pub-1876891583962196" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <meta name="description" content="在 Kettle 中主要有两个概念，一个是 Transformation，还有一个是 Job。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kettle（二）数据抽取与插入模型">
+<meta property="og:url" content="https:&#x2F;&#x2F;www.itgrocery.cn&#x2F;posts&#x2F;2bf00b60&#x2F;index.html">
+<meta property="og:site_name" content="IT杂货铺">
+<meta property="og:description" content="在 Kettle 中主要有两个概念，一个是 Transformation，还有一个是 Job。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781119498571.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781119662326.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781119908923.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120050670.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120200925.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120324396.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120444890.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120579118.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120732162.jpg">
+<meta property="og:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781120838234.jpg">
+<meta property="article:published_time" content="2017-04-02T15:29:53.000Z">
+<meta property="article:modified_time" content="2020-01-04T04:16:12.000Z">
+<meta property="article:author" content="itren(香农)">
+<meta property="article:tag" content="kettle">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;site.itgrocery.cn&#x2F;2017&#x2F;media&#x2F;15781119498571.jpg">
+
+<link rel="canonical" href="https://www.itgrocery.cn/posts/2bf00b60/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kettle（二）数据抽取与插入模型 | IT杂货铺</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154647738-2"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-154647738-2');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="IT杂货铺" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">IT杂货铺</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">技术、人、生活</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">15</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">31</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.itgrocery.cn/posts/2bf00b60/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="itren(香农)">
+      <meta itemprop="description" content="程序员👨‍💻杂记">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="IT杂货铺">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          Kettle（二）数据抽取与插入模型
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-04-02 23:29:53" itemprop="dateCreated datePublished" datetime="2017-04-02T23:29:53+08:00">2017-04-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-01-04 12:16:12" itemprop="dateModified" datetime="2020-01-04T12:16:12+08:00">2020-01-04</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/etl/" itemprop="url" rel="index">
+                    <span itemprop="name">etl</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/posts/2bf00b60/" class="post-meta-item leancloud_visitors" data-flag-title="Kettle（二）数据抽取与插入模型" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <p>在 Kettle 中主要有两个概念，一个是 Transformation，还有一个是 Job。</p>
+<a id="more"></a>
+
+<h2 id="一-关键术语与基本概念"><a href="#一-关键术语与基本概念" class="headerlink" title="一. 关键术语与基本概念"></a>一. 关键术语与基本概念</h2><p>Transformation 主要用来描述转换过程，它由多个 Step 组成，我们来看一下 Transformation 在 Kettle 中的表现形式，Transformation 本质上描述了数据在程序中的流向。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781119498571.jpg" alt=""></p>
+<p>从上图中可以看到 Transformation 包含多个节点，这些节点称为 Step，用来表示特定的功能。如排序记录这个 Step，它主要对传输过来的数据进行排序，排完序的数据再递交给记录集连接。</p>
+<p>如果说 Transformation 是数据流的话，那么 Job 就是工作流，它包含了多个 Transformation，这些 Transformation 按照特定的流程进行连接。<br>元数据也被称为数据的数据，在 Kettle 中使用的非常广泛，例如 Transformation 也有自己的元数据，它用来描述一个 Transformation 的具体细节，这些元数据可以使用文件来保存也可以存入数据库。</p>
+<p>Transformation 文件的后缀为 ktr，Job 文件的后缀为 kjb，他们都使用 xml 格式的文件来保存。</p>
+<h2 id="二-结构体系"><a href="#二-结构体系" class="headerlink" title="二. 结构体系"></a>二. 结构体系</h2><p>在介绍 Kettle 的具体实现之前是先来看看 Kettle 的整体架构，这样在讲解 Kettle 批量插入时我们可以清楚的知道这些数据来自哪里并流向何处。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781119662326.jpg" alt=""></p>
+<p>上图总共描述了四个 Step(粗体表示的)，Kettle 首先使用表输入组件从源表中读取数据存入到 RowSet 中，每个源表对应一个 RowSet ，分别存储从对应表中读取的记录。当前两个 RowSet 中有数据之后，表合并操作会分别从两个 RowSet 中读取记录，并根据给出的字段做连接操作。当合并的数据集达到一定的数量之后根据需要输出的字段选择对应的列写入到目标表中。</p>
+<p>通过上面的讲解我们大致了解了 Transformation 运行的机制，下面我们来详细分析重要每个 Step 的具体实现细节。</p>
+<h2 id="三-数据抽取"><a href="#三-数据抽取" class="headerlink" title="三. 数据抽取"></a>三. 数据抽取</h2><p>常用的数据抽取步骤在 Kettle 中的组件名叫做“表输入”，它的实现类为 TableInput 。下面我们来看下数据抽取的模型。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781119908923.jpg" alt=""></p>
+<p>上面展示了表输入启动时数据的流向，其中数字表示操作的先后顺序。如果程序是第一次启动则会初始化 thisRow 和 nextRow 这两个变量，然后将 thisRow 指向的记录放入 outputRowSet 中，最后 thisRow 指向 nextRow 指向的变量。如果程序不是第一次执行，程序会直接将取回的数据放入 nextRow 中，跟初始化相比少掉了编号为①的步骤。当程序发现 thisRow 为空时会停止表输入步骤，当然在数据处理的过程中出现任何异常，当前步骤都会通知 Trans 停止所有的转换步骤。因为 Kettle 使用的是 JDBC 连接的数据库，默认情况下 ResultSet 会将数据库中所有的数据加载到内存中，这样就很容易出现内存溢出的情况。在数据抽取的过程中为了防止内存溢出的情况，Kettle 设置了 JDBC 读取数据的方式，采用数据流的方式挨个取数据，不会将所有数据都加载到 ResultSet 中。</p>
+<h2 id="四-记录集排序"><a href="#四-记录集排序" class="headerlink" title="四. 记录集排序"></a>四. 记录集排序</h2><p>在 Kettle 中进行记录集连接操作时默认认为表中的数据是有序的，如果我们不对抽取的数据进行排序，在做 join 操作时会造成一些数据的丢失。在数据量很大的情况下，Kettle 采用的是外部排序，具体的算法为多路归并排序。当然在 Kettle 中使用排序组件会阻塞后续的步骤，如果当前数据没有完全排好序的话数据不会流向下一个步骤。对于排序 Kettle 可以设置缓存的大小，这里的缓存指的是内存中的大小，设置方法如下图所示：</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120050670.jpg" alt=""></p>
+<p>排序的设置参数如上图所示，我们可以看到其中包含了一些重要的参数，排序目录指的是临时文件的目录，“排序缓存大小”指的是在内存中多少条数据排序一次。为了更直观的展现排序的过程，我们结合示例图来讲解。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120200925.jpg" alt=""></p>
+<p>上面这幅图主要展示了排序的初始流程，通过第一轮的排序，我们可以在 tmpList 中找到 id 号最小的记录，并且我们可以知道该条记录所在的文件标识，这时我们先取出编号最小的记录，然后从 tmp2 中获取下一条记录也就是 id 为7的记录并放入到 tmpList 中，然后对 tmpList 进行排序，继续取出 tmpList 中 id 号最小的记录，通过多次上述的操作，从 tmpList 中取出的记录可以做到全局有序。</p>
+<h2 id="五-批量插入"><a href="#五-批量插入" class="headerlink" title="五. 批量插入"></a>五. 批量插入</h2><p>批量插入的流程比较简单，它的实现原理就是我们平常使用的批量插入功能。批量插入对应的 Step 为表输出，也就是 TableOutput。下面主要分析的是 TableOutput 的 processRow 方法，这是数据批量插入的入口。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120324396.jpg" alt=""></p>
+<p>我们看到一开始就调用了 getRow 方法，从源码的注释也验证了我们之前的猜想，该方法是一个会阻塞的方法，它的作用是从前一个 step 获取一条记录。<br>接着我们看该条记录是如何插入到表中的。</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120444890.jpg" alt=""></p>
+<p>我们可以看到 r 被传入 writeToTable 方法中了，我们继续跟进 writeToTable 方法。<br>该方法代码比较多，我们首先看看该方法中的如下代码：</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120579118.jpg" alt=""></p>
+<p>这段代码的主要作用是根据表的元数据信息构造出 insertStatement，该对象的类型是 PreparedStatement，为后面插入记录做准备。<br>下面我们来看看真正插入记录的代码：</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120732162.jpg" alt=""></p>
+<p>setValues 方法传入了要插入的记录（insertRowData），后面的 insertRow 中的 false 表示取消 connection 的自动提交功能。既然是批量插入肯定有提交操作的地方，该操作的代码如下：</p>
+<p><img src="https://site.itgrocery.cn/2017/media/15781120838234.jpg" alt=""></p>
+<p>从代码中我们可以看到 commitCounter 这个变量，该变量的作用是每插入多少条数据提交一次到数据库。当然如果剩下的数据量没有达到这个值在释放这个 Step 的时候也会提交一次，防止数据丢失。</p>
+
+    </div>
+
+    
+    
+    
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- AUTO -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <div class="reward-container">
+  <div>如果觉得我的文章对您有用，请查看广告（Google Ads）或扫码。您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="itren(香农) 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="itren(香农) 支付宝">
+        <p>支付宝</p>
+      </div>
+      <div style="display: inline-block;">
+        <img src="/images/paypal.png" alt="itren(香农) PayPal">
+        <p>PayPal</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>itren(香农)
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.itgrocery.cn/posts/2bf00b60/" title="Kettle（二）数据抽取与插入模型">https://www.itgrocery.cn/posts/2bf00b60/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/kettle/" rel="tag"><i class="fa fa-tag"></i> kettle</a>
+          </div>
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/1fabf0d6/" rel="prev" title="Kettle（一）之使用简介">
+      <i class="fa fa-chevron-left"></i> Kettle（一）之使用简介
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/5b5172f5/" rel="next" title="Kettle（三）分布式架构">
+      Kettle（三）分布式架构 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一-关键术语与基本概念"><span class="nav-number">1.</span> <span class="nav-text">一. 关键术语与基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二-结构体系"><span class="nav-number">2.</span> <span class="nav-text">二. 结构体系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三-数据抽取"><span class="nav-number">3.</span> <span class="nav-text">三. 数据抽取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四-记录集排序"><span class="nav-number">4.</span> <span class="nav-text">四. 记录集排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五-批量插入"><span class="nav-number">5.</span> <span class="nav-text">五. 批量插入</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="itren(香农)"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">itren(香农)</p>
+  <div class="site-description" itemprop="description">程序员👨‍💻杂记</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://t.me/titren" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;titren" rel="noopener" target="_blank"><i class="fa fa-fw fa-telegram"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/itren" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;itren" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:itren.tech@gmail.com" title="E-Mail → mailto:itren.tech@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Friend Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://theme-next.iissnan.com/" title="https:&#x2F;&#x2F;theme-next.iissnan.com" rel="noopener" target="_blank">NexT Theme</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://fontawesome.com/" title="https:&#x2F;&#x2F;fontawesome.com" rel="noopener" target="_blank">Font Awesome</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://freessl.cn/" title="https:&#x2F;&#x2F;freessl.cn" rel="noopener" target="_blank">FreeSSL</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://realfavicongenerator.net/" title="https:&#x2F;&#x2F;realfavicongenerator.net" rel="noopener" target="_blank">Favicon Generator</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.alibabacloud.com/" title="https:&#x2F;&#x2F;www.alibabacloud.com" rel="noopener" target="_blank">Alibaba Cloud</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://geektutu.com/" title="https:&#x2F;&#x2F;geektutu.com" rel="noopener" target="_blank">极客兔兔</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.shuziyimin.org/" title="https:&#x2F;&#x2F;blog.shuziyimin.org" rel="noopener" target="_blank">数字移民</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- SIDEBAR_AUTO -->
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:200px"
+           data-ad-client="ca-pub-1876891583962196"
+           data-ad-slot="9161595375"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备17022212号-1 </a>
+      <img src="/images/beian.png" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42098102000038" rel="noopener" target="_blank">鄂公网安备42098102000038 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2017 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">itren(香农)</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">106k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:36</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.1.1
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+  <script>
+  function leancloudSelector(url) {
+    return document.getElementById(url).querySelector('.leancloud-visitors-count');
+  }
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = visitors.getAttribute('id').trim();
+      var title = visitors.getAttribute('data-flag-title').trim();
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+              leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .then(response => response.json())
+              .catch(error => {
+                console.log('Failed to save visitor count', error);
+              })
+          } else {
+              Counter('post', '/classes/Counter', { title: title, url: url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.log('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return element.getAttribute('id').trim();
+      });
+
+      Counter('get', `/classes/Counter?where=${JSON.stringify({ url: { '$in': entries } })}`)
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length === 0) {
+            document.querySelectorAll('.leancloud_visitors .leancloud-visitors-count').forEach(element => {
+              element.innerText = 0;
+            });
+            return;
+          }
+          for (let item of results) {
+            let { url, time } = item;
+            leancloudSelector(url).innerText = time;
+          }
+          for (let url of entries) {
+            var element = leancloudSelector(url);
+            if (element.innerText == '') {
+              element.innerText = 0;
+            }
+          }
+        })
+        .catch(error => {
+          console.log('LeanCloud Counter Error', error);
+        });
+    }
+  }
+
+  fetch('https://app-router.leancloud.cn/2/route?appId=nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz')
+    .then(response => response.json())
+    .then(({ api_server }) => {
+      var Counter = (method, url, data) => {
+        return fetch(`https://${api_server}/1.1${url}`, {
+          method: method,
+          headers: {
+            'X-LC-Id': 'nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz',
+            'X-LC-Key': 'wBvPvCEiSnYiIBMeNWU31UEC',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script color='0,0,255' opacity='0.2' zIndex='-1' count='50' src="/lib/canvas-nest/canvas-nest-nomobile.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  <script src="//cdn.jsdelivr.net/npm/quicklink@1/dist/quicklink.umd.js"></script>
+  <script>
+      window.addEventListener('load', () => {
+      quicklink({
+        timeout: 3000,
+        priority: true,
+        ignores: [uri => uri.includes('#'),uri => uri == 'https://www.itgrocery.cn/posts/2bf00b60/',]
+      });
+      });
+  </script>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'f75b0968ac4219322421',
+      clientSecret: '1c81b8b3343c7d43b8aa324fa2c0524251be5f7e',
+      repo: 'itren.github.io',
+      owner: 'itren',
+      admin: ['itren'],
+      id: '0b353bc4013826f5e2cf6caa1b771f80',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
