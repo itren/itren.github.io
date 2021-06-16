@@ -24,6 +24,7 @@ This project contains some submodules,so you need to clone the project with recu
 ### 3. Install Dependencies
 
 ```
+cd itren.github.io
 npm install
 ```
 
