@@ -1,8 +1,16 @@
-<!-- SIDEBAR_AUTO -->
+<!-- side ad -->
 <ins class="adsbygoogle"
-     style="display:inline-block;width:300px;height:200px"
+     style="display:block"
      data-ad-client="ca-pub-1876891583962196"
-     data-ad-slot="9161595375"></ins>
+     data-ad-slot="9161595375"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
 <script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
+     // 因为直接执行AdSense的代码会出现 No slot size for availableWidth=0 的错误
+     // 并且这个广告位会无法正常展示
+     // 所以加一个 event listener，在页面加载完毕之后再执行
+     // 参考：https://stackoverflow.com/a/37822404/3833858
+     window.addEventListener('load', function() {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+     });
 </script>
