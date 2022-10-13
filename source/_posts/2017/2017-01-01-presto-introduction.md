@@ -35,7 +35,7 @@ https://github.com/MTDATA/presto/commits/mt-0.60
 https://item.jd.com/11906548.html
 ```
 
-![](https://site.itgrocery.cn/2017/media/15778849105271.jpg)
+![](2017-01-01-presto-introduction/15778849105271.jpg)
 
 京东 Presto 的 GitHub：
 
