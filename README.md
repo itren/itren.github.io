@@ -16,10 +16,8 @@ You can visit these offical websites to install required components.
 ### 2. Clone Project
 
 ```
-git clone --recursive https://github.com/itren/itren.github.io.git
+git clone https://github.com/itren/itren.github.io.git
 ```
-
-This project contains some submodules,so you need to clone the project with recursive args.
 
 ### 3. Install Dependencies
 
