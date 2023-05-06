@@ -29,8 +29,8 @@
     "hexo-renderer-marked": "^6.0.0",
     "hexo-renderer-stylus": "^2.1.0",
     "hexo-server": "^3.0.0",
-    "hexo-symbols-count-time": "^0.7.1",
-    "hexo-theme-next": "^8.13.1",
+    "hexo-symbols-count-time": "^0.6.2",
+    "hexo-theme-next": "^8.16.0",
     "pjax": "^0.2.8"
   }
 }
