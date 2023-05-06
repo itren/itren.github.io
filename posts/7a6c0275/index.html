@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-itren.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-itren.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-itren.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/pink/pace-theme-minimal.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.itgrocery.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"mac"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":true,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近在多 dubbo-admin 的改造，期间发现服务治理模块的消费者页面出现崩溃的问题。看提示视乎时因为 URL 参数解析导致的，接下来分析一下问题出现的原因。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排查 2.6.x dubbo-admin 消费者管理页面崩溃问题">
+<meta property="og:url" content="https://www.itgrocery.cn/posts/7a6c0275/index.html">
+<meta property="og:site_name" content="IT杂货铺">
+<meta property="og:description" content="最近在多 dubbo-admin 的改造，期间发现服务治理模块的消费者页面出现崩溃的问题。看提示视乎时因为 URL 参数解析导致的，接下来分析一下问题出现的原因。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-12-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-05-06T06:48:10.300Z">
+<meta property="article:author" content="itren(香农)">
+<meta property="article:tag" content="dubbo-admin">
+<meta property="article:tag" content="regexp">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://www.itgrocery.cn/posts/7a6c0275/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.itgrocery.cn/posts/7a6c0275/","path":"posts/7a6c0275/","title":"排查 2.6.x dubbo-admin 消费者管理页面崩溃问题"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>排查 2.6.x dubbo-admin 消费者管理页面崩溃问题 | IT杂货铺</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154647738-2"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-154647738-2","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+<script data-ad-client="ca-pub-1876891583962196" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="IT杂货铺" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">IT杂货铺</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">技术、人、生活</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">26</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">15</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">31</span></a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%A1%A8%E8%B1%A1"><span class="nav-number">1.</span> <span class="nav-text">问题表象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">问题分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">解决办法</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="itren(香农)"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">itren(香农)</p>
+  <div class="site-description" itemprop="description">程序员👨‍💻杂记</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdn.jsdelivr.net/npm/@creativecommons/vocabulary@2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+<!-- side ad -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="9161595375"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     // 因为直接执行AdSense的代码会出现 No slot size for availableWidth=0 的错误
+     // 并且这个广告位会无法正常展示
+     // 所以加一个 event listener，在页面加载完毕之后再执行
+     // 参考：https://stackoverflow.com/a/37822404/3833858
+     window.addEventListener('load', function() {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+     });
+</script>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.itgrocery.cn/posts/7a6c0275/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="itren(香农)">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="IT杂货铺">
+      <meta itemprop="description" content="程序员👨‍💻杂记">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="排查 2.6.x dubbo-admin 消费者管理页面崩溃问题 | IT杂货铺">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          排查 2.6.x dubbo-admin 消费者管理页面崩溃问题
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-12-23 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-23T00:00:00+08:00">2019-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-05-06 14:48:10" itemprop="dateModified" datetime="2023-05-06T14:48:10+08:00">2023-05-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/microservices/" itemprop="url" rel="index"><span itemprop="name">microservices</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/7a6c0275/" class="post-meta-item leancloud_visitors" data-flag-title="排查 2.6.x dubbo-admin 消费者管理页面崩溃问题" title="阅读次数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近在多 dubbo-admin 的改造，期间发现服务治理模块的消费者页面出现崩溃的问题。看提示视乎时因为 URL 参数解析导致的，接下来分析一下问题出现的原因。</p>
+<span id="more"></span>
+
+<h2 id="问题表象"><a href="#问题表象" class="headerlink" title="问题表象"></a>问题表象</h2><p>如果发现这个问题，那么后面基本上很大概率会再次出现，出现这个问题时页面会给出提示语句，下面看下错误页面给出的提示信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">There was an unexpected error (type=Internal Server Error,status=500).</span><br><span class="line">Illegal query string &quot;application=xxx&amp;category=consumers&amp;check=falsegroup=&amp;interface=xxx.xxx...&quot;</span><br></pre></td></tr></table></figure>
+
+<p>看到这个错误信息可以去控制台看下错误日志，找到异常跑出的代码块，我查找到出错的类是“com.alibaba.dubboadmin.registry.common.route.ParseUtils”这个类的“parseQuery”方法。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><p>上面定位到了代码出错的位置，下面来看看这个方法的代码块，来看看这个方法具体做了哪些操作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">private static Pattern QUERY_PATTERN = Pattern</span><br><span class="line">            .compile(&quot;([&amp;=]?)\\s*([^&amp;=\\s]+)&quot;);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * Parse Query String into Map. For strings that have only Key, key3 = &lt;/ code&gt; is ignored.</span><br><span class="line">     *</span><br><span class="line">     * @param keyPrefix In the output of the Map Key plus a unified prefix.</span><br><span class="line">     * @param query Query String，For example: &lt;code&gt;key1=value1&amp;key2=value2&lt;/code&gt;</span><br><span class="line">     * @return When Query String is &lt;code&gt;key1=value1&amp;key2=value2&lt;/code&gt;, and prefix is &lt;code&gt;pre.&lt;/code&gt;,</span><br><span class="line">     *         then &lt;code&gt;Map&#123;pre.key1=value1, pre.key=value2&#125;&lt;/code&gt; will be returned.</span><br><span class="line">     */</span><br><span class="line">    // FIXME Is it reasonable to throw an IllegalStateException??</span><br><span class="line">    public static Map&lt;String, String&gt; parseQuery(String keyPrefix, String query) &#123;</span><br><span class="line">        if (query == null)</span><br><span class="line">            return new HashMap&lt;String, String&gt;();</span><br><span class="line">        if (keyPrefix == null)</span><br><span class="line">            keyPrefix = &quot;&quot;;</span><br><span class="line"></span><br><span class="line">        Matcher matcher = QUERY_PATTERN.matcher(query);</span><br><span class="line">        Map&lt;String, String&gt; routeQuery = new HashMap&lt;String, String&gt;();</span><br><span class="line">        String key = null;</span><br><span class="line">        while (matcher.find()) &#123; // Match one by one</span><br><span class="line">            String separator = matcher.group(1);</span><br><span class="line">            String content = matcher.group(2);</span><br><span class="line">            if (separator == null || separator.length() == 0</span><br><span class="line">                    || &quot;&amp;&quot;.equals(separator)) &#123;</span><br><span class="line">                if (key != null)</span><br><span class="line">                    throw new IllegalStateException(&quot;Illegal query string \&quot;&quot;</span><br><span class="line">                            + query + &quot;\&quot;, The error char &#x27;&quot; + separator</span><br><span class="line">                            + &quot;&#x27; at index &quot; + matcher.start() + &quot; before \&quot;&quot;</span><br><span class="line">                            + content + &quot;\&quot;.&quot;);</span><br><span class="line">                key = content;</span><br><span class="line">            &#125; else if (&quot;=&quot;.equals(separator)) &#123;</span><br><span class="line">                if (key == null)</span><br><span class="line">                    throw new IllegalStateException(&quot;Illegal query string \&quot;&quot;</span><br><span class="line">                            + query + &quot;\&quot;, The error char &#x27;&quot; + separator</span><br><span class="line">                            + &quot;&#x27; at index &quot; + matcher.start() + &quot; before \&quot;&quot;</span><br><span class="line">                            + content + &quot;\&quot;.&quot;);</span><br><span class="line">                routeQuery.put(keyPrefix + key, content);</span><br><span class="line">                key = null;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                if (key == null)</span><br><span class="line">                    throw new IllegalStateException(&quot;Illegal query string \&quot;&quot;</span><br><span class="line">                            + query + &quot;\&quot;, The error char &#x27;&quot; + separator</span><br><span class="line">                            + &quot;&#x27; at index &quot; + matcher.start() + &quot; before \&quot;&quot;</span><br><span class="line">                            + content + &quot;\&quot;.&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        /*if (key != null)</span><br><span class="line">        throw new IllegalStateException(&quot;Illegal route rule \&quot;&quot; + query</span><br><span class="line">                + &quot;\&quot;, The error in the end char: &quot; + key);*/</span><br><span class="line">        return routeQuery;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到上面有正则表达式的用法，主要是用来解析 URL(application&#x3D;xxx&amp;category&#x3D;consumers&amp;check&#x3D;false&amp;group&#x3D;&amp;interface&#x3D;xxx.xxx) 中的 Key 和 Value 的。它这里的正则表达式可以查阅出来是“([&amp;&#x3D;]?)\s*([^&amp;&#x3D;\s]+)”。这段代码的核心就是分析这个正则表达式的作用，主体部分是由两个括号组成的，上面的“matcher.group(1)”和“matcher.group(2)”就是用来取这两个括号中匹配到的内容，第一个括号中表示的内容是匹配“&amp;”、“&#x3D;”零次或者一次，第二个括号表示匹配非“&amp;”、“&#x3D;”、“\s”符号的文本。</p>
+<p>根据上面分析的语法规则，第一次匹配到的是“application”，第二次匹配到的是“&#x3D;xxx”，第三次匹配到的是“&amp;category”，第四次匹配到的是“&#x3D;consumers”……，下面根据<a target="_blank" rel="noopener" href="https://c.runoob.com/front-end/854">正则表达式测试网站</a>给出完整的匹配结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">共找到 9 处匹配：</span><br><span class="line">application</span><br><span class="line">=xxx</span><br><span class="line">&amp;category</span><br><span class="line">=consumers</span><br><span class="line">&amp;check</span><br><span class="line">=false</span><br><span class="line">&amp;group</span><br><span class="line">&amp;interface</span><br><span class="line">=xxx.xxx</span><br></pre></td></tr></table></figure>
+
+<p>知道匹配的结果之后再来看看哪些地方会抛异常，上述代码有三个地方会抛出异常，第一处是“key”不为空的时候，正常情况下如果匹配到等号后面的值，“key”就会被置空。但上面有一种情况就是“&amp;group&#x3D;”后面没有值，“&amp;group”后面就直接匹配到了“&amp;interface”，如果连续两次匹配到的是“&amp;xxx”，就会出现“key”没有被置空的情况，上面的异常就是因为这种问题产生的。第二处抛异常是匹配到了 Value，但是没有匹配到 Key，比如漏掉了“&amp;xxx”，连续两次出现了“&#x3D;xxx”。第三种异常还没想到什么情况会遇到，可能永远不会遇到，因为根据表达式的含义“separator”能出现的所有情况都在前面进行处理了。</p>
+<h2 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h2><p>这个异常很明显可以看出是 dubbo-admin 和 dubbo 关于参数校验的标准不一样造成的，正常情况下 key 和 value 应该成对出现，我这里为了不想程序报错，允许了这种非正常参数的出现。我这里遇到不成对出现的场景是 node 应用也要去调用 dubbo 的接口，不清楚 node 那边是如何往 zookeeper 写数据的，后续看下 java 中的 dubbo 对于这种非正常的数据是如何处理的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><!-- bottom ad -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1876891583962196"
+     data-ad-slot="6848430839"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>itren(香农)
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://www.itgrocery.cn/posts/7a6c0275/" title="排查 2.6.x dubbo-admin 消费者管理页面崩溃问题">https://www.itgrocery.cn/posts/7a6c0275/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/dubbo-admin/" rel="tag"># dubbo-admin</a>
+              <a href="/tags/regexp/" rel="tag"># regexp</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/3398c822/" rel="prev" title="优化 Hexo 提升站点的 SEO">
+                  <i class="fa fa-chevron-left"></i> 优化 Hexo 提升站点的 SEO
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/8c479faa/" rel="next" title="上海移动八元套餐最新（2020）办理教程">
+                  上海移动八元套餐最新（2020）办理教程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备17022212号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42098102000038" rel="noopener" target="_blank">鄂公网安备42098102000038 </a>
+  </div>
+
+<div class="copyright">
+  &copy; 2017 – 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">itren(香农)</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/itren" class="github-corner" title="在 GitHub 上关注我" aria-label="在 GitHub 上关注我" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script size="150" alpha="0.3" zIndex="-2" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@next-theme/pjax@0.6.0/pjax.min.js" integrity="sha256-vxLn1tSKWD4dqbMRyv940UYw4sXgMtYcK6reefzZrao=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js" integrity="sha256-7PhEpEWEW0XXQ0k6kQrPKwuoIomz8R8IYyuU1Qew4P8=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js" integrity="sha256-mOFREFhqmHeQbXpK2lp4nA3qooVgACfh88fpJftLBbc=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/pjax.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.1/dist/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"nNWdSP1jUbJtyrV03DIdlM5A-gzGzoHsz","app_key":"wBvPvCEiSnYiIBMeNWU31UEC","server_url":null,"security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"itren","repo":"itren.github.io","client_id":"f75b0968ac4219322421","client_secret":"1c81b8b3343c7d43b8aa324fa2c0524251be5f7e","admin_user":"itren","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"3569144ac28b0dab38ab3bbf3bb96e38"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
